@@ -2,7 +2,7 @@
 
 <p align="center">
   <br>
-  <em>A powerful Evernote export solution by FRAQTIV</em>
+  <em>A powerful Evernote export and data exrtaction tool</em>
 </p>
 
 ## Overview
