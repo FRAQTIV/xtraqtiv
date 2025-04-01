@@ -1,7 +1,6 @@
 # Extraqtiv
 
 <p align="center">
-  <img src="path/to/logo.png" alt="Extraqtiv Logo" width="200"/>
   <br>
   <em>A powerful Evernote export solution by FRAQTIV</em>
 </p>
