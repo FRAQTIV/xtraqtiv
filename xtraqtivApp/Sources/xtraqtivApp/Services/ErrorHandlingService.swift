@@ -1,7 +1,7 @@
 import Foundation
 import OSLog
 
-/// `ErrorHandlingService` provides centralized error handling capabilities for the Extraqtive application.
+/// `ErrorHandlingService` provides centralized error handling capabilities for the xtraqtive application.
 /// 
 /// This service is designed to:
 /// - Standardize error handling across the application
@@ -25,7 +25,7 @@ public class ErrorHandlingService {
         "noteFetchFailed": "Could not retrieve your notes. Please try again later.",
         "exportFailed": "Export operation failed. Please check your file permissions and try again.",
         "resourceError": "Failed to process attachments in your notes.",
-        "permissionDenied": "Extraqtive doesn't have necessary permissions. Please check system settings."
+        "permissionDenied": "xtraqtive doesn't have necessary permissions. Please check system settings."
     ]
     
     /// Dictionary of recovery suggestions for known error types
@@ -56,7 +56,7 @@ public class ErrorHandlingService {
             "Verify that the note resources exist in your Evernote account"
         ],
         "permissionDenied": [
-            "Open System Settings and grant Extraqtive the necessary permissions",
+            "Open System Settings and grant xtraqtive the necessary permissions",
             "Restart the application after granting permissions",
             "Contact support if the issue persists"
         ]
@@ -210,8 +210,8 @@ public class ErrorHandlingService {
 
 // MARK: - Error Types
 
-/// Enumeration of common Extraqtive application errors
-public enum ExtraqtiveError: Error, LocalizedError {
+/// Enumeration of common xtraqtive application errors
+public enum xtraqtiveError: Error, LocalizedError {
     case authenticationFailed(reason: String)
     case networkError(underlying: Error?)
     case noteFetchFailed(reason: String)
@@ -274,7 +274,7 @@ public enum ExtraqtiveError: Error, LocalizedError {
         case .resourceError:
             return "Try exporting without attachments or check if the resources exist in your Evernote account."
         case .permissionDenied:
-            return "Open System Settings and grant Extraqtive the necessary permissions."
+            return "Open System Settings and grant xtraqtive the necessary permissions."
         case .unexpectedError:
             return "Try restarting the application. If the problem persists, please contact support."
         }

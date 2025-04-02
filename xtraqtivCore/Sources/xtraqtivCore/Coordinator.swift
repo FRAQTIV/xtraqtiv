@@ -1,10 +1,10 @@
 import Foundation
 import Combine
 
-/// `ExtraqtivCoordinator` is the central coordination class for the Extraqtiv application.
+/// `xtraqtivCoordinator` is the central coordination class for the xtraqtiv application.
 /// It manages the interaction between different components such as authentication, note fetching,
 /// and export services, providing a clean API for the application layer.
-public class ExtraqtivCoordinator {
+public class xtraqtivCoordinator {
     
     // MARK: - Dependencies
     
@@ -68,7 +68,7 @@ public class ExtraqtivCoordinator {
     
     // MARK: - Initialization
     
-    /// Initializes a new Extraqtiv coordinator with the specified services
+    /// Initializes a new xtraqtiv coordinator with the specified services
     /// - Parameters:
     ///   - authService: The service responsible for Evernote authentication
     ///   - noteFetcher: The service for fetching notes from Evernote
@@ -91,7 +91,7 @@ public class ExtraqtivCoordinator {
     
     /// Creates a coordinator with default service implementations
     /// - Returns: A configured coordinator instance
-    public static func createWithDefaultServices() -> ExtraqtivCoordinator {
+    public static func createWithDefaultServices() -> xtraqtivCoordinator {
         // Implementation would create and inject default services
         fatalError("Default services implementation required")
     }

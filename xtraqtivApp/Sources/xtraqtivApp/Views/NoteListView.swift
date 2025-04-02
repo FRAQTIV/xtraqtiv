@@ -1,5 +1,5 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /// `NoteListView` displays a list of notes with sorting, filtering, and selection capabilities.
 ///

@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct ExtraqtivApp: App {
+struct xtraqtivApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
@@ -19,7 +19,7 @@ struct ExtraqtivApp: App {
 struct ContentView: View {
     var body: some View {
         VStack(spacing: 20) {
-            Text("Hello, Extraqtiv!")
+            Text("Hello, xtraqtiv!")
                 .font(.largeTitle)
                 .fontWeight(.bold)
             

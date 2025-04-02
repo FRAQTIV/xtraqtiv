@@ -1,6 +1,6 @@
 //
 //  AppSettingsManager.swift
-//  ExtraqtivApp
+//  xtraqtivApp
 //
 //  Created by FRAQTIV
 //

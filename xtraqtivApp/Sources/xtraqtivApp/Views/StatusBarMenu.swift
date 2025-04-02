@@ -1,10 +1,10 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /**
  * StatusBarMenu
  *
- * A SwiftUI component that implements a macOS status bar menu for the Extraqtiv application.
+ * A SwiftUI component that implements a macOS status bar menu for the xtraqtiv application.
  *
  * Features:
  * - Evernote connection status indicator 
@@ -34,10 +34,10 @@ struct StatusBarMenu: View {
     /// Current app settings
     @EnvironmentObject private var appSettings: AppSettingsManager
     
-    /// Authentication service from ExtraqtivCore
+    /// Authentication service from xtraqtivCore
     @EnvironmentObject private var authService: EvernoteAuthService
     
-    /// Export manager from ExtraqtivCore
+    /// Export manager from xtraqtivCore
     @EnvironmentObject private var exportManager: ExportManager
     
     // MARK: - Callbacks
@@ -188,7 +188,7 @@ struct StatusBarMenu: View {
             
             Divider()
             
-            Button("Quit Extraqtiv") {
+            Button("Quit xtraqtiv") {
                 NSApp.terminate(nil)
             }
         }
@@ -352,7 +352,7 @@ class StatusBarController {
             menu.addItem(menuItem)
             
             statusItem.menu = menu
-            statusItem.button?.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "Extraqtiv")
+            statusItem.button?.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "xtraqtiv")
         }
     }
     

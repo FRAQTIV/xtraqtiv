@@ -1,5 +1,5 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /// `AuthenticationView` provides a user interface for authenticating with Evernote.
 ///
@@ -12,7 +12,7 @@ import ExtraqtivCore
 public struct AuthenticationView: View {
     // MARK: - Environment
     
-    /// The authentication service from ExtraqtivCore
+    /// The authentication service from xtraqtivCore
     @EnvironmentObject private var authService: EvernoteAuthServiceImpl
     
     /// The environment's color scheme (light/dark mode)
@@ -62,7 +62,7 @@ public struct AuthenticationView: View {
             }
             
             // Authentication info
-            Text("Authentication allows Extraqtiv to access your Evernote notes and notebooks for export. Your credentials are never stored locally.")
+            Text("Authentication allows xtraqtiv to access your Evernote notes and notebooks for export. Your credentials are never stored locally.")
                 .font(.caption)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)

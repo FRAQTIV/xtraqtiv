@@ -1,5 +1,5 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /// `ExportView` provides a comprehensive interface for configuring and executing note exports.
 ///
@@ -16,7 +16,7 @@ struct ExportView: View {
     // MARK: - Environment & State Properties
     
     /// The environment object that coordinates exports
-    @EnvironmentObject private var coordinator: ExtraqtivCore.Coordinator
+    @EnvironmentObject private var coordinator: xtraqtivCore.Coordinator
     
     /// Selected notebooks for export
     @Binding var selectedNotebooks: [Notebook]
@@ -484,7 +484,7 @@ struct ExportView_Previews: PreviewProvider {
             selectedNotebooks: .constant([]),
             selectedNotes: .constant([])
         )
-        .environmentObject(ExtraqtivCore.Coordinator())
+        .environmentObject(xtraqtivCore.Coordinator())
     }
 }
 

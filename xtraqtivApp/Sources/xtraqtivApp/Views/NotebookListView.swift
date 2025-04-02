@@ -1,5 +1,5 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /// A view that displays a list of notebooks with metadata, search functionality, and multi-selection support.
 ///
@@ -196,7 +196,7 @@ struct NotebookListView_Previews: PreviewProvider {
 }
 
 /// Model representing a notebook in the application
-/// - Note: This is a placeholder definition - the actual implementation would be in ExtraqtivCore
+/// - Note: This is a placeholder definition - the actual implementation would be in xtraqtivCore
 struct Notebook: Identifiable, Hashable {
     /// Unique identifier for the notebook
     let id: String

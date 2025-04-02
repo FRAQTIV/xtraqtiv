@@ -4,32 +4,32 @@
 import PackageDescription
 
 let package = Package(
-    name: "ExtraqtivApp",
+    name: "xtraqtivApp",
     platforms: [
         .macOS(.v13)
     ],
     products: [
         .executable(
-            name: "ExtraqtivApp",
-            targets: ["ExtraqtivApp"]
+            name: "xtraqtivApp",
+            targets: ["xtraqtivApp"]
         ),
     ],
     dependencies: [
-        .package(path: "../ExtraqtivCore"),
+        .package(path: "../xtraqtivCore"),
     ],
     targets: [
         .executableTarget(
-            name: "ExtraqtivApp",
+            name: "xtraqtivApp",
             dependencies: [
-                .product(name: "ExtraqtivCore", package: "ExtraqtivCore")
+                .product(name: "xtraqtivCore", package: "xtraqtivCore")
             ],
             resources: [
                 .process("Resources")
             ]
         ),
         .testTarget(
-            name: "ExtraqtivAppTests",
-            dependencies: ["ExtraqtivApp"]
+            name: "xtraqtivAppTests",
+            dependencies: ["xtraqtivApp"]
         ),
     ]
 )
