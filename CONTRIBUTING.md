@@ -1,48 +1,54 @@
 # Contributing to Extraqtiv
 
-Thank you for your interest in contributing to Extraqtiv! We welcome contributions from the community and are pleased to have you join us.
+Thank you for your interest in contributing to Extraqtiv! This document provides guidelines and instructions for contributing to the project.
 
-## Code of Conduct
+## Git Workflow
 
-By participating in this project, you agree to maintain a welcoming, inclusive, and harassment-free environment.
+We follow a structured Git workflow to maintain code quality and ensure smooth collaboration. Our workflow includes:
+- Specific branching strategies
+- Commit message conventions
+- Code review processes
+- Release management procedures
 
-## Getting Started
+**For detailed instructions, please refer to our [Git Workflow Guide](.github/GIT_WORKFLOW.md).**
 
-1. Fork the repository on GitHub
+## Project Structure
+
+The project is organized into the following main directories:
+- `ExtraqtivApp`: SwiftUI-based macOS application (UI/UX)
+- `ExtraqtivCore`: Core business logic and Evernote integration
+- `Documentation`: User guides and project documentation
+- `Scripts`: Development, build, and CI/CD scripts
+
+## Development Setup
+
+1. Fork the repository
 2. Clone your fork locally
-3. Create a new branch for your feature or fix
-4. Make your changes following our development guidelines
-5. Push to your fork and submit a Pull Request
+3. Set up the development environment (refer to README.md)
+4. Create a new branch following our naming conventions
+5. Make your changes
+6. Submit a pull request
 
-## Development Guidelines
+## Code Style
 
-- Follow the existing code style and patterns
-- Use SwiftUI for all new UI components
-- Follow MVVM architecture pattern
-- Write unit tests for all core functionality
-- Ensure backward compatibility with macOS 13.0+
-- Update documentation for any new features
+- Follow the existing code style
+- Maintain consistent formatting
+- Add appropriate documentation
+- Include tests for new features
 
-## Pull Request Process
+## Pull Request Guidelines
 
-1. Update the README.md with details of significant changes
-2. Add tests for new functionality
+1. Ensure your code follows our style guidelines
+2. Include relevant tests
 3. Update documentation as needed
-4. Ensure all tests pass and the build is successful
-5. Request review from maintainers
-
-## License and Attribution
-
-- All contributions to Extraqtiv will be licensed under the MIT License
-- By submitting a pull request, you agree to license your contributions under the MIT License
-- Please add yourself to the list of contributors in your pull request if you'd like to be attributed
-- Major contributions will be acknowledged in the README.md
+4. Follow the PR template
+5. Keep changes focused and atomic
 
 ## Questions or Need Help?
 
-- Open an issue for bugs or feature discussions
-- Contact the maintainers at support@fraqtiv.com
-- Join our community discussions in the GitHub Discussions section
+If you have questions or need assistance:
+1. Check existing documentation
+2. Search through issues
+3. Create a new issue with the question tag
 
 Thank you for contributing to Extraqtiv!
-
