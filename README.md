@@ -2,7 +2,7 @@
 
 <p align="center">
   <br>
-  <em>A powerful Evernote export and data exrtaction tool</em>
+  <em>A powerful Evernote export and data extraction tool</em>
 </p>
 
 ## Overview
@@ -84,7 +84,7 @@ Extraqtiv is built using a modular architecture:
 1. Use the "Local Library" tab to view exported content
 2. Apply tags, filters, or custom organization to your local archive
 3. Perform batch operations (rename, reorganize, tag) as needed
-4. Use search functionality to quickly locate specific content
+4. Use the search functionality to locate specific content quickly
 
 ## Privacy & Security
 
@@ -98,7 +98,7 @@ Extraqtiv is designed with your data privacy and security as a top priority:
 
 ## Support the Project
 
-If you find Extraqtiv helpful, consider supporting its development through Buy Me a Coffee. Your support helps maintain and improve the project!
+If Extraqtiv is helpful, consider supporting its development through Buy Me a Coffee. Your support helps maintain and improve the project!
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/fraqtiv)
 
