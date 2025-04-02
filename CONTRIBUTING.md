@@ -1,6 +1,6 @@
-# Contributing to Extraqtiv
+# Contributing to xtraqtiv
 
-Thank you for your interest in contributing to Extraqtiv! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to xtraqtiv! This document provides guidelines and instructions for contributing to the project.
 
 ## Git Workflow
 
@@ -51,4 +51,4 @@ If you have questions or need assistance:
 2. Search through issues
 3. Create a new issue with the question tag
 
-Thank you for contributing to Extraqtiv!
+Thank you for contributing to xtraqtiv!

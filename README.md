@@ -1,8 +1,8 @@
-# Extraqtiv
+# xtraqtiv
 Evernote integration and data extraction tool
 
 ## About
-Extraqtiv is a powerful tool that integrates with Evernote to provide advanced data extraction capabilities. Built with SwiftUI for macOS, it offers a seamless experience for managing and processing your Evernote content.
+xtraqtiv is a powerful tool that integrates with Evernote to provide advanced data extraction capabilities. Built with SwiftUI for macOS, it offers a seamless experience for managing and processing your Evernote content.
 
 ## Project Structure
 - `xtraqtivApp`: SwiftUI-based macOS application (UI/UX)
