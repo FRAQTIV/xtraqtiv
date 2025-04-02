@@ -1,6 +1,6 @@
 //
 //  ExportManager.swift
-//  ExtraqtivCore
+//  xtraqtivCore
 //
 //  Created by FRAQTIV
 //
@@ -323,7 +323,7 @@ class ENEXFormatter: ExportFormatter {
         return """
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE en-export SYSTEM "http://xml.evernote.com/pub/evernote-export3.dtd">
-        <en-export export-date="\(Date().ISO8601Format())" application="Extraqtiv" version="1.0">
+        <en-export export-date="\(Date().ISO8601Format())" application="xtraqtiv" version="1.0">
           <note>
             <title>\(note.title)</title>
             <content><![CDATA[\(note.content)]]></content>

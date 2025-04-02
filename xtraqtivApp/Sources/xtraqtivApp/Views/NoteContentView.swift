@@ -1,6 +1,6 @@
 import SwiftUI
 import WebKit
-import ExtraqtivCore
+import xtraqtivCore
 
 /// `NoteContentView` is responsible for rendering Evernote note content.
 ///

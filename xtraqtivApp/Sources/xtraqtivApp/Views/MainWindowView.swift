@@ -1,9 +1,9 @@
 import SwiftUI
-import ExtraqtivCore
+import xtraqtivCore
 
 /// # MainWindowView
 /// 
-/// The primary view for the Extraqtiv application's main window.
+/// The primary view for the xtraqtiv application's main window.
 /// 
 /// This view establishes the core layout of the application, including:
 /// - A sidebar for navigating notebooks and other content
@@ -30,7 +30,7 @@ struct MainWindowView: View {
     /// Search text for filtering notes and notebooks
     @State private var searchText = ""
     
-    // MARK: - Sample Data (To be replaced with actual data from ExtraqtivCore)
+    // MARK: - Sample Data (To be replaced with actual data from xtraqtivCore)
     
     /// Sample notebooks for preview and development
     @State private var notebooks = [
@@ -72,7 +72,7 @@ struct MainWindowView: View {
                     .foregroundColor(.secondary)
             }
         }
-        .navigationTitle("Extraqtiv")
+        .navigationTitle("xtraqtiv")
         .toolbar {
             // MARK: Toolbar Items
             ToolbarItemGroup {

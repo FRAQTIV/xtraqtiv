@@ -4,15 +4,15 @@
 import PackageDescription
 
 let package = Package(
-    name: "ExtraqtivCore",
+    name: "xtraqtivCore",
     platforms: [
         .macOS(.v13)
     ],
     products: [
         // Products define the executables and libraries a package produces, making them visible to other packages.
         .library(
-            name: "ExtraqtivCore",
-            targets: ["ExtraqtivCore"]),
+            name: "xtraqtivCore",
+            targets: ["xtraqtivCore"]),
     ],
     dependencies: [
         // Dependencies on other packages.
@@ -24,15 +24,15 @@ let package = Package(
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         .target(
-            name: "ExtraqtivCore",
+            name: "xtraqtivCore",
             dependencies: [
                 .product(name: "EvernoteSDK", package: "evernote-cloud-sdk-ios")
             ],
             path: "Sources"
         ),
         .testTarget(
-            name: "ExtraqtivCoreTests",
-            dependencies: ["ExtraqtivCore"],
+            name: "xtraqtivCoreTests",
+            dependencies: ["xtraqtivCore"],
             path: "Tests"
         ),
     ],

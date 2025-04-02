@@ -1,22 +1,33 @@
-# Extraqtiv
+# xtraqtiv
+Evernote integration and data extraction tool
 
-<p align="center">
-  <br>
-  <em>A powerful Evernote export and data extraction tool</em>
-</p>
+## About
+xtraqtiv is a powerful tool that integrates with Evernote to provide advanced data extraction capabilities. Built with SwiftUI for macOS, it offers a seamless experience for managing and processing your Evernote content.
 
-## Overview
+## Project Structure
+- `xtraqtivApp`: SwiftUI-based macOS application (UI/UX)
+- `xtraqtivCore`: Core business logic and Evernote integration
+- `Documentation`: User guides and project documents
+- `Scripts`: Development, build, and CI/CD scripts
 
-Extraqtiv is a professional-grade desktop application designed for Evernote power users who need comprehensive control over their note archives. This macOS-native tool facilitates complete notebook exports while preserving the integrity of notes, attachments, and metadata.
+## Contributing
+We welcome contributions from the community! Our project follows a structured development workflow to ensure code quality and maintainability.
 
-Key features include:
+### Development Workflow
+We maintain a comprehensive [Git Workflow Guide](.github/GIT_WORKFLOW.md) that covers:
+- Branch management strategy
+- Commit message conventions
+- Pull request processes
+- Code review guidelines
+- Release procedures
 
-- **Full-Fidelity Exports**: Generate ENEX or other export formats with complete metadata and attachments intact
-- **Local Data Management**: Categorize, batch-edit, and organize notes for offline storage
-- **Enhanced Viewing and Analytics**: Advanced searching, filtering, and optional analytics on note content (all performed locally)
-- **Security and Privacy**: No external data transmission or storage - all processing happens on your machine
+Please review our [Contributing Guidelines](CONTRIBUTING.md) before submitting any changes.
 
-## System Requirements
+## Getting Started
+1. Clone the repository
+2. Follow setup instructions in the xtraqtivApp/README.md
+3. Review the Git Workflow Guide for development practices
+4. Check CONTRIBUTING.md for detailed contribution guidelines
 
 - macOS 13.0 or later (with SwiftUI support)
 - Internet connection (for initial Evernote authentication only)
@@ -25,35 +36,35 @@ Key features include:
 
 ## Installation
 
-1. Download the latest release from the [Releases page](https://github.com/fraqtiv/extraqtiv/releases)
+1. Download the latest release from the [Releases page](https://github.com/FRAQTIV/xtraqtiv/releases)
 2. Open the downloaded DMG file
-3. Drag Extraqtiv to your Applications folder
-4. Launch Extraqtiv from your Applications folder or Launchpad
+3. Drag xtraqtiv to your Applications folder
+4. Launch xtraqtiv from your Applications folder or Launchpad
 5. Authenticate with your Evernote account when prompted
 
 ## Development Setup
 
-Extraqtiv is built using a modular architecture:
+xtraqtiv is built using a modular architecture:
 
 ### Project Structure
 
-- **ExtraqtivApp**: The main macOS application built with SwiftUI
-- **ExtraqtivCore**: Core library providing Evernote API integration and data processing functionality
+- **xtraqtivApp**: The main macOS application built with SwiftUI
+- **xtraqtivCore**: Core library providing Evernote API integration and data processing functionality
 
 ### Building the Project
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/fraqtiv/extraqtiv.git
-   cd extraqtiv
+   git clone https://github.com/FRAQTIV/xtraqtiv.git
+   cd xtraqtiv
    ```
 
 2. Open the Xcode project:
    ```bash
-   open Extraqtiv.xcodeproj
+   open xtraqtiv.xcodeproj
    ```
 
-3. Select the appropriate scheme (ExtraqtivApp) and run target (My Mac)
+3. Select the appropriate scheme (xtraqtivApp) and run target (My Mac)
 
 4. Build and run the project using Cmd+R or the play button
 
@@ -67,7 +78,7 @@ Extraqtiv is built using a modular architecture:
 
 ### Initial Setup
 
-1. Launch Extraqtiv
+1. Launch xtraqtiv
 2. Click "Connect to Evernote" and complete the authentication process
 3. Wait for your notebooks to sync (initial sync time depends on your library size)
 
@@ -88,7 +99,7 @@ Extraqtiv is built using a modular architecture:
 
 ## Privacy & Security
 
-Extraqtiv is designed with your data privacy and security as a top priority:
+xtraqtiv is designed with your data privacy and security as a top priority:
 
 - **Local Processing**: All data processing happens locally on your device
 - **No External Servers**: Your notes and credentials are never transmitted to any external servers
@@ -98,7 +109,7 @@ Extraqtiv is designed with your data privacy and security as a top priority:
 
 ## Support the Project
 
-If Extraqtiv is helpful, consider supporting its development through Buy Me a Coffee. Your support helps maintain and improve the project!
+If xtraqtiv is helpful, consider supporting its development through Buy Me a Coffee. Your support helps maintain and improve the project!
 
 [![Buy Me A Coffee](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/fraqtiv)
 
@@ -106,10 +117,11 @@ If Extraqtiv is helpful, consider supporting its development through Buy Me a Co
 
 For issues, feature requests, or general feedback:
 
-- Submit an issue on our [GitHub repository](https://github.com/fraqtiv/extraqtiv/issues)
+- Submit an issue on our [GitHub repository](https://github.com/FRAQTIV/xtraqtiv/issues)
 - Contact our support team at support@fraqtiv.com
 - Consider supporting the project through [Buy Me a Coffee](https://www.buymeacoffee.com/fraqtiv)
 ## License
+[License information to be added]
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
+## Contact
+[Contact information to be added]
