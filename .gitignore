@@ -1,60 +1,18 @@
-# Xcode
-## User settings
-xcuserdata/
-*.xcuserstate
-project.xcworkspace/
+# Python
+__pycache__/
+*.py[cod]
+*.class
 
-# Swift Package Manager
-.build/
-.swiftpm/
-Package.resolved
-
-# Build products
-build/
-DerivedData/
-*.o
-*.LinkFileList
-*.hmap
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-._*
+# Environment
+.env
+venv/
+.venv/
 
 # IDE
 .idea/
 .vscode/
 *.swp
-*.swo
 
-# Crash logs
-*.ips
+# macOS
+.DS_Store
 
-# Swift Package Manager
-Packages/
-Package.pins
-.build/
-
-# CocoaPods
-Pods/
-*.xcworkspace
-
-# Carthage
-Carthage/
-
-# fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots
-fastlane/test_output
-
-# Code Coverage
-*.gcda
-*.gcno
-*.xcresult
-
-# Other
-*.moved-aside
-*.xccheckout
-*.xcscmblueprint
