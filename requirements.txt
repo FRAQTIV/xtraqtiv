@@ -1,4 +1,7 @@
-evernote-sdk-python3
+evernote3
 requests
 flask
-python-dotenv 
+python-dotenv
+fastapi
+uvicorn
+keyring 
