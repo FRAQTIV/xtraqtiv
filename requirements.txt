@@ -1,0 +1,4 @@
+evernote-sdk-python3
+requests
+flask
+python-dotenv 

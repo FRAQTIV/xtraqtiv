@@ -1,36 +1,39 @@
-# xtraqtiv
-Evernote integration and data extraction tool
+# Evernote Extractor (Python)
 
-## About
-xtraqtiv is a powerful tool that integrates with Evernote to provide advanced data extraction capabilities. Built with SwiftUI for macOS, it offers a seamless experience for managing and processing your Evernote content.
+A cross-platform tool to authenticate with Evernote, extract user notebooks and notes, and export data for large-scale analysis or migration.
+
+## Features
+- OAuth authentication with Evernote
+- Fetch and list user notebooks
+- Fetch notes and attachments
+- Export data as JSON
+
+## Setup
+
+1. Clone the repository
+2. Create a virtual environment:
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+## Usage
+
+1. Run the main script:
+   ```bash
+   python xtraqtivApp/main.py
+   ```
+2. Follow the instructions to authenticate with Evernote and fetch your data.
 
 ## Project Structure
-- `xtraqtivApp`: SwiftUI-based macOS application (UI/UX)
-- `xtraqtivCore`: Core business logic and Evernote integration
-- `Documentation`: User guides and project documents
-- `Scripts`: Development, build, and CI/CD scripts
 
-## Contributing
-We welcome contributions from the community! Our project follows a structured development workflow to ensure code quality and maintainability.
+- `xtraqtivCore/` — Core modules (auth, fetch, export)
+- `xtraqtivApp/` — Entry point (CLI or UI)
+- `requirements.txt` — Python dependencies
 
-### Development Workflow
-We maintain a comprehensive [Git Workflow Guide](.github/GIT_WORKFLOW.md) that covers:
-- Branch management strategy
-- Commit message conventions
-- Pull request processes
-- Code review guidelines
-- Release procedures
-
-Please review our [Contributing Guidelines](CONTRIBUTING.md) before submitting any changes.
-
-## Getting Started
-1. Clone the repository
-2. Follow setup instructions in the xtraqtivApp/README.md
-3. Review the Git Workflow Guide for development practices
-4. Check CONTRIBUTING.md for detailed contribution guidelines
-
-## License
-[License information to be added]
-
-## Contact
-[Contact information to be added]
+## Notes
+- This tool is in early development. Contributions and feedback are welcome!
