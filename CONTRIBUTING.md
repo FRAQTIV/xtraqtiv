@@ -18,7 +18,6 @@ The project is organized into the following main directories:
 - `xtraqtivApp`: SwiftUI-based macOS application (UI/UX)
 - `xtraqtivCore`: Core business logic and Evernote integration
 - `Documentation`: User guides and project documentation
-- `Scripts`: Development, build, and CI/CD scripts
 
 ## Development Setup
 
