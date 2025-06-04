@@ -1,0 +1,7 @@
+evernote3
+fastapi
+uvicorn
+keyring
+python-dotenv
+requests
+flask

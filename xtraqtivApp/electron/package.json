@@ -1,0 +1,52 @@
+{
+  "name": "evernote-extractor",
+  "version": "1.0.0",
+  "description": "Cross-platform Evernote data extractor with Obsidian integration",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev",
+    "build": "electron-builder",
+    "dist": "npm run build"
+  },
+  "keywords": [
+    "evernote",
+    "export", 
+    "obsidian",
+    "notes",
+    "markdown",
+    "cross-platform"
+  ],
+  "author": "FRAQTIV",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "axios": "^1.6.8"
+  },
+  "build": {
+    "appId": "com.fraqtiv.evernote-extractor",
+    "productName": "Evernote Extractor",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "renderer.js", 
+      "preload.js",
+      "index.html",
+      "package.json"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity"
+    },
+    "win": {
+      "target": "nsis"
+    },
+    "linux": {
+      "target": "AppImage"
+    }
+  }
+}
