@@ -1,20 +1,86 @@
-# Xcode
-## User settings
-xcuserdata/
-*.xcuserstate
-project.xcworkspace/
+# =============================================================================
+# EVERNOTE EXTRACTOR - GITIGNORE  
+# =============================================================================
 
-# Swift Package Manager
-.build/
-.swiftpm/
-Package.resolved
-
-# Build products
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
 build/
-DerivedData/
-*.o
-*.LinkFileList
-*.hmap
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+
+# Environment variables
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# -----------------------------------------------------------------------------
+# Node.js & Electron
+# -----------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+.npm
+
+# Electron distribution
+dist/
+out/
+build/
+
+# -----------------------------------------------------------------------------
+# IDE & Editor
+# -----------------------------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+Cursor/
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-*
+
+# -----------------------------------------------------------------------------
+# Operating System
+# -----------------------------------------------------------------------------
 
 # macOS
 .DS_Store
@@ -22,39 +88,73 @@ DerivedData/
 .LSOverride
 ._*
 
-# IDE
-.idea/
-.vscode/
-*.swp
-*.swo
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Crash logs
-*.ips
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
 
-# Swift Package Manager
-Packages/
-Package.pins
-.build/
+# -----------------------------------------------------------------------------
+# Testing & Coverage
+# -----------------------------------------------------------------------------
+coverage/
+.nyc_output
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache
 
-# CocoaPods
-Pods/
-*.xcworkspace
+# -----------------------------------------------------------------------------
+# Logs & Runtime
+# -----------------------------------------------------------------------------
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# Carthage
-Carthage/
+# Runtime data
+.grunt
+.lock-wscript
 
-# fastlane
-fastlane/report.xml
-fastlane/Preview.html
-fastlane/screenshots
-fastlane/test_output
+# -----------------------------------------------------------------------------
+# Temporary & Cache Files
+# -----------------------------------------------------------------------------
+tmp/
+temp/
+*.tmp
+*.temp
+.cache/
 
-# Code Coverage
-*.gcda
-*.gcno
-*.xcresult
+# -----------------------------------------------------------------------------
+# Project Specific
+# -----------------------------------------------------------------------------
 
-# Other
-*.moved-aside
-*.xccheckout
-*.xcscmblueprint
+# Development scripts (temporary)
+test_*.py
+run_*.sh
+debug_*.py
+
+# Exported data (user content)
+exports/
+output/
+data/
+*.evernote
+
+# API keys and credentials (safety net)
+credentials.json
+config.json
+secrets.json
+.secrets
+
+# Documentation builds
+docs/_build/
+site/
