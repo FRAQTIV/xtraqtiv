@@ -1,4 +1,10 @@
+# =============================================================================
+# EVERNOTE EXTRACTOR - GITIGNORE
+# =============================================================================
+
+# -----------------------------------------------------------------------------
 # Python
+# -----------------------------------------------------------------------------
 __pycache__/
 *.py[cod]
 *$py.class
@@ -30,6 +36,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+myenv/
 
 # Environment variables
 .env.local
@@ -37,46 +44,118 @@ venv.bak/
 .env.test.local
 .env.production.local
 
-# Node.js
+# -----------------------------------------------------------------------------
+# Node.js & Electron
+# -----------------------------------------------------------------------------
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+.npm
 
-# Electron
+# Electron distribution
 dist/
 out/
+build/
 
-# IDE
+# -----------------------------------------------------------------------------
+# IDE & Editor
+# -----------------------------------------------------------------------------
 .vscode/
 .idea/
 *.swp
 *.swo
+*~
+.cursor/
+Cursor/
 
-# OS
+# JetBrains
+.idea/
+*.iml
+*.iws
+
+# Sublime Text
+*.sublime-*
+
+# -----------------------------------------------------------------------------
+# Operating System
+# -----------------------------------------------------------------------------
+
+# macOS
 .DS_Store
-Thumbs.db
+.AppleDouble
+.LSOverride
+._*
 
-# Testing
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+
+# -----------------------------------------------------------------------------
+# Testing & Coverage
+# -----------------------------------------------------------------------------
 coverage/
 .nyc_output
+.coverage
+htmlcov/
+.tox/
+.pytest_cache/
+.cache
 
-# Logs
-logs
+# -----------------------------------------------------------------------------
+# Logs & Runtime
+# -----------------------------------------------------------------------------
+logs/
 *.log
-
-# Runtime data
-pids
+pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Temporary files
+# Runtime data
+.grunt
+.lock-wscript
+
+# -----------------------------------------------------------------------------
+# Temporary & Cache Files
+# -----------------------------------------------------------------------------
 tmp/
 temp/
+*.tmp
+*.temp
+.cache/
 
-# Test files (these are temporary)
+# -----------------------------------------------------------------------------
+# Project Specific
+# -----------------------------------------------------------------------------
+
+# Development scripts (temporary)
 test_*.py
-run_app.sh
+run_*.sh
+debug_*.py
+
+# Exported data (user content)
+exports/
+output/
+data/
+*.evernote
+
+# API keys and credentials (safety net)
+credentials.json
+config.json
+secrets.json
+.secrets
+
+# Documentation builds
+docs/_build/
+site/
 
