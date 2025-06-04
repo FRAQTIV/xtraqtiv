@@ -6,11 +6,16 @@ def list_notebooks(client=None):
     if not client:
         access_token = get_stored_credentials()
         if not access_token:
-            return []
+            print("ERROR: [list_notebooks] No stored access token found.")
+            return None
         
-        consumer_key = os.getenv("EVERNOTE_CONSUMER_KEY", "extraqtive-1974")
-        consumer_secret = os.getenv("EVERNOTE_CONSUMER_SECRET", "5a0d3a222a8c18e60dbf381a9d90b6e1745b24287f323d6da3eabe47")
+        consumer_key = os.getenv("EVERNOTE_CONSUMER_KEY")
+        consumer_secret = os.getenv("EVERNOTE_CONSUMER_SECRET")
         sandbox = os.getenv("SANDBOX", "false").lower() == "true"
+
+        if not consumer_key or not consumer_secret:
+            print("ERROR: [list_notebooks] EVERNOTE_CONSUMER_KEY or EVERNOTE_CONSUMER_SECRET not set.")
+            return None
         
         client = create_evernote_client(consumer_key, consumer_secret, access_token, sandbox)
     
@@ -25,18 +30,23 @@ def list_notebooks(client=None):
         } for nb in notebooks]
     except Exception as e:
         print(f"Error fetching notebooks: {e}")
-        return []
+        return None
 
 def list_notes(notebook_guid=None, client=None):
     """Fetch notes from a specific notebook or all notebooks"""
     if not client:
         access_token = get_stored_credentials()
         if not access_token:
+            print("ERROR: [list_notes] No stored access token found.")
             return []
         
-        consumer_key = os.getenv("EVERNOTE_CONSUMER_KEY", "extraqtive-1974")
-        consumer_secret = os.getenv("EVERNOTE_CONSUMER_SECRET", "5a0d3a222a8c18e60dbf381a9d90b6e1745b24287f323d6da3eabe47")
+        consumer_key = os.getenv("EVERNOTE_CONSUMER_KEY")
+        consumer_secret = os.getenv("EVERNOTE_CONSUMER_SECRET")
         sandbox = os.getenv("SANDBOX", "false").lower() == "true"
+
+        if not consumer_key or not consumer_secret:
+            print("ERROR: [list_notes] EVERNOTE_CONSUMER_KEY or EVERNOTE_CONSUMER_SECRET not set.")
+            return []
         
         client = create_evernote_client(consumer_key, consumer_secret, access_token, sandbox)
     

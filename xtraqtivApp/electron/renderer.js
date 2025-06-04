@@ -14,6 +14,12 @@ const progressFill = document.getElementById('progressFill');
 const progressText = document.getElementById('progressText');
 const appInfo = document.getElementById('appInfo');
 
+// New DOM elements for notebooks
+const loadNotebooksBtn = document.getElementById('loadNotebooksBtn');
+const notebooksSection = document.getElementById('notebooksSection');
+const notebooksList = document.getElementById('notebooksList');
+const notebooksStatus = document.getElementById('notebooksStatus');
+
 // State
 let isAuthenticated = false;
 let statusCheckInterval = null;
@@ -33,10 +39,14 @@ function updateUI() {
     if (isAuthenticated) {
         loginSection.style.display = 'none';
         loggedInSection.classList.add('visible');
+        // Initially hide notebooks section until loaded
+        // notebooksSection.classList.remove('visible'); 
     } else {
         loginSection.style.display = 'block';
         loggedInSection.classList.remove('visible');
         exportSection.classList.remove('visible');
+        notebooksSection.classList.remove('visible'); // Hide notebooks if not authenticated
+        notebooksList.innerHTML = ''; // Clear list on logout
     }
 }
 
@@ -79,6 +89,9 @@ async function logout() {
         showStatus('Logging out...', 'info');
         await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
         isAuthenticated = false;
+        notebooksSection.classList.remove('visible'); // Hide notebooks on logout
+        notebooksList.innerHTML = ''; // Clear list on logout
+        notebooksStatus.textContent = ''; // Clear status on logout
         updateUI();
         showStatus('Logged out successfully', 'success');
         stopAuthPolling();
@@ -121,10 +134,57 @@ function stopAuthPolling() {
     }
 }
 
+// New function to fetch and display notebooks
+async function fetchAndDisplayNotebooks() {
+    if (!isAuthenticated) {
+        notebooksStatus.textContent = 'Please login first.';
+        notebooksSection.classList.remove('visible');
+        return;
+    }
+
+    notebooksSection.classList.add('visible');
+    notebooksList.innerHTML = ''; // Clear previous list
+    notebooksStatus.innerHTML = '<span class="spinner"></span> Loading notebooks...';
+
+    try {
+        const response = await fetch(`${API_BASE}/notebooks`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: response.statusText }));
+            throw new Error(`Failed to load notebooks: ${errorData.detail || response.statusText}`);
+        }
+
+        const notebooksData = await response.json();
+
+        if (notebooksData.length === 0) {
+            notebooksStatus.textContent = 'No notebooks found.';
+        } else {
+            notebooksData.forEach(nb => {
+                const li = document.createElement('li');
+                li.style.padding = '8px 0';
+                li.style.borderBottom = '1px solid #eee';
+                li.textContent = `${nb.name} (${nb.noteCount !== undefined ? nb.noteCount : 'N/A'} notes)`;
+                if (nb.defaultNotebook) {
+                    const defaultSpan = document.createElement('span');
+                    defaultSpan.textContent = ' (Default)';
+                    defaultSpan.style.color = '#7f8c8d';
+                    defaultSpan.style.fontSize = '0.9em';
+                    li.appendChild(defaultSpan);
+                }
+                notebooksList.appendChild(li);
+            });
+            notebooksStatus.textContent = `Found ${notebooksData.length} notebook(s).`;
+        }
+    } catch (error) {
+        console.error('Error fetching notebooks:', error);
+        notebooksStatus.textContent = `Error: ${error.message}`;
+    }
+}
+
 // Event listeners
 loginBtn.addEventListener('click', startAuth);
 logoutBtn.addEventListener('click', logout);
 exportBtn.addEventListener('click', startExport);
+loadNotebooksBtn.addEventListener('click', fetchAndDisplayNotebooks); // New event listener
 
 // Initialize app
 async function initApp() {

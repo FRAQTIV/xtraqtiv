@@ -4,4 +4,3 @@ uvicorn
 keyring
 python-dotenv
 requests
-flask
