@@ -16,6 +16,7 @@ const notebookSelectionArea = document.getElementById('notebookSelectionArea');
 const notebookListLoading = document.getElementById('notebookListLoading');
 const notebookListError = document.getElementById('notebookListError');
 const notebookListContainer = document.getElementById('notebookListContainer');
+const refreshNotebooksBtn = document.getElementById('refreshNotebooksBtn');
 
 // New DOM elements for notes display
 const notesArea = document.getElementById('notesArea');
@@ -36,6 +37,8 @@ const noAttachmentsMsg = document.getElementById('noAttachmentsMsg');
 // State
 let isAuthenticated = false;
 let statusCheckInterval = null;
+let cachedNotebooks = null;
+let cachedNotesMetadata = null;
 
 // Utility functions
 function showStatus(message, type = 'info') {
@@ -52,16 +55,18 @@ function updateUI() {
     if (isAuthenticated) {
         loginSection.classList.add('hidden');
         loggedInSection.classList.remove('hidden');
-        fetchAndDisplayNotebooks(); // Fetch notebooks when authenticated
+        fetchAndDisplayNotebooks();
     } else {
         loginSection.classList.remove('hidden');
         loggedInSection.classList.add('hidden');
         exportSection.classList.add('hidden');
         notebookSelectionArea.classList.add('hidden'); 
-        notebookListContainer.innerHTML = ''; 
-        notesArea.classList.add('hidden'); // Hide notes area on logout
-        noteContentArea.classList.add('hidden'); // Hide note content area on logout
-        if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments area on logout
+        if (notebookListContainer) notebookListContainer.innerHTML = ''; 
+        notesArea.classList.add('hidden');
+        noteContentArea.classList.add('hidden');
+        if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden');
+        cachedNotebooks = null;
+        cachedNotesMetadata = null;
     }
 }
 
@@ -71,7 +76,7 @@ async function checkAuthStatus() {
         const response = await fetch(`${API_BASE}/auth/status`);
         const data = await response.json();
         isAuthenticated = data.authenticated;
-        updateUI(); // This will call fetchAndDisplayNotebooks if authenticated
+        updateUI();
         
         if (isAuthenticated) {
             showStatus('Connected to Evernote', 'success');
@@ -126,7 +131,7 @@ async function logout() {
         
         if (response.ok) {
             isAuthenticated = false;
-            updateUI(); // This will hide notebook section and clear list
+            updateUI();
             hideStatus();
             stopStatusPolling();
         } else {
@@ -152,7 +157,7 @@ function startStatusPolling() {
             stopStatusPolling();
             loginBtn.disabled = false;
         }
-    }, 2000); // Check every 2 seconds
+    }, 2000);
 }
 
 function stopStatusPolling() {
@@ -162,16 +167,54 @@ function stopStatusPolling() {
     }
 }
 
-// New function to fetch and display notebooks
-async function fetchAndDisplayNotebooks() {
-    notesArea.classList.add('hidden'); // Hide notes list when notebooks are (re)loaded
-    noteContentArea.classList.add('hidden'); // Hide note content when notebooks are (re)loaded
-    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments when notebooks are (re)loaded
-    notebookSelectionArea.classList.remove('hidden');
-    notebookListLoading.classList.remove('hidden');
-    notebookListError.classList.add('hidden');
-    notebookListContainer.innerHTML = ''; // Clear previous list
+// New function to render notebooks from data (cache or fetch)
+function renderNotebooks(notebooks) {
+    notebookListContainer.innerHTML = '';
+    if (notebooks.length === 0) {
+        notebookListContainer.innerHTML = '<p>No notebooks found.</p>';
+        return;
+    }
+    notebooks.forEach(notebook => {
+        const div = document.createElement('div');
+        div.classList.add('notebook-item');
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `nb-${notebook.guid}`;
+        checkbox.value = notebook.guid;
+        checkbox.name = 'notebook';
+        if (notebook.defaultNotebook) checkbox.checked = true;
+        const label = document.createElement('label');
+        label.htmlFor = `nb-${notebook.guid}`;
+        label.textContent = notebook.name;
+        if (notebook.stack) label.textContent += ` (Stack: ${notebook.stack})`;
+        div.appendChild(checkbox);
+        div.appendChild(label);
+        notebookListContainer.appendChild(div);
+    });
+}
 
+async function fetchAndDisplayNotebooks(forceRefresh = false) {
+    notesArea.classList.add('hidden');
+    noteContentArea.classList.add('hidden');
+    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden');
+    cachedNotesMetadata = null;
+    if (notesListContainer) notesListContainer.innerHTML = '';
+    if (noteContentDisplay) noteContentDisplay.textContent = '';
+    if (noteAttachmentsList) noteAttachmentsList.innerHTML = '';
+
+    notebookSelectionArea.classList.remove('hidden');
+    notebookListError.classList.add('hidden');
+
+    if (!forceRefresh && cachedNotebooks) {
+        console.log("Using cached notebooks");
+        renderNotebooks(cachedNotebooks);
+        notebookListLoading.classList.add('hidden');
+        return;
+    }
+
+    console.log(forceRefresh ? "Forcing refresh of notebooks" : "Fetching notebooks");
+    notebookListLoading.classList.remove('hidden');
+    
     try {
         const response = await fetch(`${API_BASE}/notebooks`);
         if (!response.ok) {
@@ -182,48 +225,19 @@ async function fetchAndDisplayNotebooks() {
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
         const notebooks = await response.json();
-
+        cachedNotebooks = notebooks;
         notebookListLoading.classList.add('hidden');
-
-        if (notebooks.length === 0) {
-            notebookListContainer.innerHTML = '<p>No notebooks found.</p>';
-            return;
-        }
-
-        notebooks.forEach(notebook => {
-            const div = document.createElement('div');
-            div.classList.add('notebook-item');
-            
-            const checkbox = document.createElement('input');
-            checkbox.type = 'checkbox';
-            checkbox.id = `nb-${notebook.guid}`;
-            checkbox.value = notebook.guid;
-            checkbox.name = 'notebook';
-            if (notebook.defaultNotebook) {
-                checkbox.checked = true; // Pre-select default notebook
-            }
-
-            const label = document.createElement('label');
-            label.htmlFor = `nb-${notebook.guid}`;
-            label.textContent = notebook.name;
-            if (notebook.stack) {
-                label.textContent += ` (Stack: ${notebook.stack})`;
-            }
-
-            div.appendChild(checkbox);
-            div.appendChild(label);
-            notebookListContainer.appendChild(div);
-        });
-
+        renderNotebooks(notebooks);
     } catch (error) {
         console.error('Error fetching notebooks:', error);
         notebookListLoading.classList.add('hidden');
-        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        let displayMessage = error.message;
         if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
             displayMessage = "Cannot connect to the application server to fetch notebooks. Please ensure it is running and check your network connection.";
         }
         notebookListError.textContent = `Error: ${displayMessage}`;
         notebookListError.classList.remove('hidden');
+        cachedNotebooks = null;
     }
 }
 
@@ -236,18 +250,18 @@ async function startExport() {
         return;
     }
 
-    // Show main status and detailed progress info
     showStatus(`Fetching notes for ${selectedNotebookGuids.length} notebook(s)...`, 'info');
-    exportSection.classList.remove('hidden'); // Make exportSection visible for progress
+    exportSection.classList.remove('hidden');
     progressInfo.textContent = 'Requesting note metadata from server... Please wait.';
     
     exportBtn.disabled = true;
     notesArea.classList.remove('hidden');
-    notesListLoading.classList.remove('hidden'); // This shows "Loading notes list..."
+    notesListLoading.classList.remove('hidden');
     notesListError.classList.add('hidden');
     notesListContainer.innerHTML = '';
     noteContentArea.classList.add('hidden'); 
     if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); 
+    cachedNotesMetadata = null;
 
     try {
         const response = await fetch(`${API_BASE}/notes/fetch-metadata`, {
@@ -262,7 +276,7 @@ async function startExport() {
             const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve notes metadata.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
-        progressInfo.textContent = 'Processing received note metadata...'; // Update progress
+        progressInfo.textContent = 'Processing received note metadata...';
         const notesMetadata = await response.json();
         
         notesListLoading.classList.add('hidden');
@@ -272,7 +286,6 @@ async function startExport() {
             notesListContainer.innerHTML = '<p>No notes found in selected notebook(s).</p>';
             showStatus('No notes found.', 'info');
             progressInfo.textContent = 'No notes found in the selected notebook(s).';
-            // Consider hiding exportSection after a delay or if no notes found and no further action
         } else {
             notesMetadata.forEach(noteMeta => {
                 const noteDiv = document.createElement('div');
@@ -287,13 +300,13 @@ async function startExport() {
             });
             showStatus(`Found ${notesMetadata.length} notes. Click a title to view content.`, 'success');
             progressInfo.textContent = `Successfully loaded ${notesMetadata.length} note headers.`;
-            // exportSection.classList.add('hidden'); // Hide after successful load of metadata
+            cachedNotesMetadata = notesMetadata;
         }
 
     } catch (error) {
         console.error('Error fetching notes metadata:', error);
         notesListLoading.classList.add('hidden');
-        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        let displayMessage = error.message;
         if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
             displayMessage = "Cannot connect to the application server to fetch notes. Please ensure it is running and check your network connection.";
         }
@@ -301,8 +314,9 @@ async function startExport() {
         notesListError.textContent = `Error: ${displayMessage}`;
         notesListError.classList.remove('hidden');
         exportBtn.disabled = false;
-        showStatus('Error fetching notes.', 'error'); // General status
-        progressInfo.textContent = `Error fetching notes: ${displayMessage}`; // Update progress with the refined message
+        showStatus('Error fetching notes.', 'error');
+        progressInfo.textContent = `Error fetching notes: ${displayMessage}`;
+        cachedNotesMetadata = null;
     }
 }
 
@@ -313,10 +327,9 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     noteContentError.classList.add('hidden');
     noteContentDisplay.textContent = '';
 
-    // Handle attachments display
-    noteAttachmentsArea.classList.remove('hidden'); // Show the attachments area
-    noteAttachmentsList.innerHTML = ''; // Clear previous attachments
-    noAttachmentsMsg.classList.add('hidden'); // Hide no attachments message initially
+    noteAttachmentsArea.classList.remove('hidden');
+    noteAttachmentsList.innerHTML = '';
+    noAttachmentsMsg.classList.add('hidden');
 
     try {
         const response = await fetch(`${API_BASE}/notes/${noteGuid}/content`);
@@ -329,15 +342,12 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
         noteContentDisplay.textContent = note.content; 
         selectedNoteTitle.textContent = `Note Content: ${note.title}`;
 
-        // Display attachments
         if (note.attachments && note.attachments.length > 0) {
             note.attachments.forEach(att => {
                 const li = document.createElement('li');
                 
                 const a = document.createElement('a');
                 a.href = `${API_BASE}/attachments/${att.guid}/data`;
-                // a.target = '_blank'; // Optional: to ensure it doesn't navigate the current view, though download should prevent that.
-                // Forcing download attribute, though Content-Disposition header should handle it:
                 a.download = att.fileName || 'attachment'; 
 
                 let displayText = att.fileName || 'Untitled Attachment';
@@ -358,7 +368,7 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     } catch (error) {
         console.error(`Error fetching content for note ${noteGuid}:`, error);
         noteContentLoading.classList.add('hidden');
-        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        let displayMessage = error.message;
         if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
             displayMessage = `Cannot connect to the server to fetch content for note \"${noteTitle}\". Please ensure it is running and check your network connection.`;
         }
@@ -373,6 +383,7 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
 loginBtn.addEventListener('click', startLogin);
 logoutBtn.addEventListener('click', logout);
 exportBtn.addEventListener('click', startExport);
+refreshNotebooksBtn.addEventListener('click', () => fetchAndDisplayNotebooks(true));
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
