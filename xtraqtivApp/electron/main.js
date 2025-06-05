@@ -1,3 +1,7 @@
+/**
+ * Electron main process configuration.
+ * Creates the browser window and handles IPC events.
+ */
 const { app, BrowserWindow, shell, ipcMain, session } = require('electron');
 const path = require('path');
 
