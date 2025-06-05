@@ -4,10 +4,13 @@ import os
 import keyring
 from evernote.api.client import EvernoteClient
 from evernote.edam.notestore import NoteStore
+from evernote.edam.notestore.ttypes import NotesMetadataResultSpec, NoteFilter
+from evernote.edam.type.ttypes import NoteSortOrder
 from dotenv import load_dotenv
 from typing import List
+import datetime
 
-from .models import Notebook # Added import for Notebook model
+from .models import Notebook, NoteMetadata, Note
 
 load_dotenv()
 
@@ -104,4 +107,120 @@ def list_notebooks():
     except Exception as e:
         # Log the exception e for debugging
         print(f"Error fetching notebooks: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch notebooks from Evernote") 
+        raise HTTPException(status_code=500, detail="Failed to fetch notebooks from Evernote")
+
+@app.post("/notes/fetch-metadata", response_model=List[NoteMetadata])
+def fetch_notes_metadata(notebook_guids: List[str]):
+    auth_token = get_auth_token()
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    all_notes_metadata = []
+    try:
+        client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
+        note_store = client.get_note_store()
+
+        # Define what metadata to fetch
+        # For available fields, see Edam.Limits.EDAM_NOTES_METADATA_RESULT_SPEC_...
+        result_spec = NotesMetadataResultSpec(
+            includeTitle=True,
+            includeCreated=True,
+            includeUpdated=True,
+            includeTagGuids=True,
+            # includeAttributes=True, # For things like author, sourceURL, etc.
+            # includeNotebookGuid=True # Not strictly needed as we filter by it
+        )
+
+        for notebook_guid in notebook_guids:
+            note_filter = NoteFilter(
+                notebookGuid=notebook_guid,
+                order=NoteSortOrder.UPDATED, # Or CREATED, TITLE etc.
+                ascending=False
+            )
+            
+            offset = 0
+            max_notes_per_call = 250 # Evernote API limit for findNotesMetadata
+            while True:
+                notes_metadata_list = note_store.findNotesMetadata(
+                    note_filter,
+                    offset,
+                    max_notes_per_call,
+                    result_spec
+                )
+                
+                if not notes_metadata_list.notes:
+                    break # No more notes in this notebook
+
+                for en_note_meta in notes_metadata_list.notes:
+                    # Resolve tag GUIDs to names (optional, can be done on client or here)
+                    # For now, just pass GUIDs and an empty list for names
+                    tag_names = [] # Placeholder
+                    # if en_note_meta.tagGuids:
+                    #    try:
+                    #        tag_names = note_store.getNoteTagNames(en_note_meta.guid)
+                    #    except Exception as e:
+                    #        print(f"Error fetching tag names for note {en_note_meta.guid}: {e}")
+                    
+                    note_meta = NoteMetadata(
+                        guid=en_note_meta.guid,
+                        title=en_note_meta.title,
+                        created=datetime.datetime.fromtimestamp(en_note_meta.created / 1000.0),
+                        updated=datetime.datetime.fromtimestamp(en_note_meta.updated / 1000.0),
+                        notebookGuid=notebook_guid, # Assign the current notebook_guid
+                        tagGuids=en_note_meta.tagGuids if en_note_meta.tagGuids else [],
+                        tagNames=tag_names
+                    )
+                    all_notes_metadata.append(note_meta)
+                
+                if notes_metadata_list.startIndex + len(notes_metadata_list.notes) >= notes_metadata_list.totalNotes:
+                    break # Reached the end for this notebook
+                offset += len(notes_metadata_list.notes)
+
+        return all_notes_metadata
+
+    except Exception as e:
+        print(f"Error fetching notes metadata: {e}") # Log the exception
+        # Consider more specific error handling for Evernote API errors (e.g., EDAMUserException)
+        raise HTTPException(status_code=500, detail=f"Failed to fetch notes metadata: {str(e)}")
+
+@app.get("/notes/{note_guid}/content", response_model=Note)
+def fetch_note_content(note_guid: str):
+    auth_token = get_auth_token()
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
+        note_store = client.get_note_store()
+
+        # Fetch the note with content and tags
+        # Parameters for getNote: token, guid, withContent, withResourcesData, withResourcesRecognition, withResourcesAlternateData
+        # The Note object returned by getNote also contains metadata like title, created, updated, tagGuids, notebookGuid etc.
+        # It can also contain a list of Tag objects if Note.tags is populated by the server.
+        en_note = note_store.getNote(note_guid, True, False, False, False)
+
+        # Resolve tag GUIDs to tag names if available in the full Note object
+        tag_names = []
+        if en_note.tags: # en_note.tags should be a list of Tag objects
+            tag_names = [tag.name for tag in en_note.tags if tag.name]
+        elif en_note.tagGuids: # Fallback if en_note.tags is not populated
+            # This would require an additional call per note to getNoteTagNames or a batch call if available
+            # For simplicity, we'll rely on en_note.tags or leave tagNames empty if not directly available
+            pass
+            
+        note_data = Note(
+            guid=en_note.guid,
+            title=en_note.title,
+            created=datetime.datetime.fromtimestamp(en_note.created / 1000.0),
+            updated=datetime.datetime.fromtimestamp(en_note.updated / 1000.0),
+            notebookGuid=en_note.notebookGuid,
+            tagGuids=en_note.tagGuids if en_note.tagGuids else [],
+            tagNames=tag_names,
+            content=en_note.content
+        )
+        return note_data
+
+    except Exception as e:
+        print(f"Error fetching note content for {note_guid}: {e}")
+        # Handle specific Evernote exceptions like EDAMNotFoundException if a note isn't found
+        raise HTTPException(status_code=500, detail=f"Failed to fetch note content: {str(e)}") 
