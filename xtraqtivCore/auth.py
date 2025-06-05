@@ -1,3 +1,5 @@
+"""OAuth helper utilities for interacting with Evernote."""
+
 import requests
 import urllib.parse
 from evernote.api.client import EvernoteClient

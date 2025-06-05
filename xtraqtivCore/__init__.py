@@ -1,1 +1,1 @@
-# xtraqtivCore - Python backend for Evernote data extraction 
+"""Package initialization for Evernote extraction utilities."""

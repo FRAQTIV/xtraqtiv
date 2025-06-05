@@ -1,3 +1,5 @@
+"""FastAPI endpoints exposing Evernote authentication and data APIs."""
+
 import inspect # New import
 import sys # New import
 
