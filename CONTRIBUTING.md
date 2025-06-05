@@ -15,10 +15,10 @@ We follow a structured Git workflow to maintain code quality and ensure smooth c
 ## Project Structure
 
 The project is organized into the following main directories:
-- `xtraqtivApp`: SwiftUI-based macOS application (UI/UX)
-- `xtraqtivCore`: Core business logic and Evernote integration
-- `Documentation`: User guides and project documentation
-- `Scripts`: Development, build, and CI/CD scripts
+- `xtraqtivApp`: Electron desktop application (UI/UX)
+- `xtraqtivCore`: Core backend logic and Evernote integration
+- `Documentation`: User guides and diagrams
+- `tasks`: Product requirements and development tasks
 
 ## Development Setup
 
