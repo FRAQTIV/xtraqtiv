@@ -3,7 +3,11 @@ from fastapi.responses import RedirectResponse, JSONResponse
 import os
 import keyring
 from evernote.api.client import EvernoteClient
+from evernote.edam.notestore import NoteStore
 from dotenv import load_dotenv
+from typing import List
+
+from .models import Notebook # Added import for Notebook model
 
 load_dotenv()
 
@@ -74,4 +78,30 @@ def auth_status():
 @app.post('/auth/logout')
 def auth_logout():
     delete_auth_token()
-    return {'status': 'logged out'} 
+    return {'status': 'logged out'}
+
+@app.get("/notebooks", response_model=List[Notebook])
+def list_notebooks():
+    auth_token = get_auth_token()
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
+        note_store = client.get_note_store()
+        raw_notebooks = note_store.listNotebooks()
+
+        notebooks = [
+            Notebook(
+                guid=nb.guid,
+                name=nb.name,
+                defaultNotebook=nb.defaultNotebook if nb.defaultNotebook is not None else False,
+                stack=nb.stack if nb.stack else None
+            )
+            for nb in raw_notebooks
+        ]
+        return notebooks
+    except Exception as e:
+        # Log the exception e for debugging
+        print(f"Error fetching notebooks: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch notebooks from Evernote") 

@@ -83,6 +83,17 @@
             
             <div id="loggedInSection" class="hidden">
                 <p>Successfully connected to Evernote!</p>
+                
+                <div id="notebookSelectionArea" class="hidden">
+                    <h4>Select Notebooks for Export:</h4>
+                    <div id="notebookListLoading" class="status info">Loading notebooks...</div>
+                    <div id="notebookListError" class="status error hidden"></div>
+                    <div id="notebookListContainer" style="max-height: 200px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                        <!-- Notebooks will be dynamically populated here -->
+                    </div>
+                    <p><small>You can select multiple notebooks.</small></p>
+                </div>
+
                 <button id="logoutBtn">Logout</button>
                 <button id="exportBtn">Start Export</button>
             </div>
