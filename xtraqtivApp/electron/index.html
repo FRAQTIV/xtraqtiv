@@ -124,7 +124,8 @@
             <pre id="noteContentDisplay" style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
                 <!-- Note ENML content will be displayed here -->
             </pre>
-            <button id="viewAsMarkdownBtn" class="hidden" style="margin-top: 10px; margin-bottom: 5px;">View as Markdown</button>
+            <button id="viewAsMarkdownBtn" class="hidden" style="margin-top: 10px; margin-bottom: 5px; margin-right: 5px;">View as Markdown</button>
+            <button id="viewAsHtmlBtn" class="hidden" style="margin-top: 10px; margin-bottom: 5px;">View as HTML</button>
 
             <div id="noteAttachmentsArea" style="margin-top: 15px;">
                 <h5>Attachments:</h5>
@@ -141,6 +142,15 @@
             <div id="noteMarkdownError" class="status error hidden"></div>
             <pre id="noteMarkdownDisplay" style="background-color: #e8f5e9; color: #1b5e20; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
                 <!-- Converted Markdown content will be displayed here -->
+            </pre>
+        </div>
+
+        <div id="noteHtmlArea" class="hidden" style="margin-top: 20px;">
+            <h4 id="selectedNoteHtmlTitle">Note Content (HTML):</h4>
+            <div id="noteHtmlLoading" class="status info hidden">Converting to HTML...</div>
+            <div id="noteHtmlError" class="status error hidden"></div>
+            <pre id="noteHtmlDisplay" style="background-color: #e3f2fd; color: #0d47a1; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
+                <!-- Converted HTML content will be displayed here -->
             </pre>
         </div>
 

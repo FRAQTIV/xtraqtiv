@@ -41,6 +41,16 @@ const noteMarkdownLoading = document.getElementById('noteMarkdownLoading');
 const noteMarkdownError = document.getElementById('noteMarkdownError');
 const noteMarkdownDisplay = document.getElementById('noteMarkdownDisplay');
 
+// New DOM elements for HTML display
+const noteHtmlArea = document.getElementById('noteHtmlArea');
+const selectedNoteHtmlTitle = document.getElementById('selectedNoteHtmlTitle');
+const noteHtmlLoading = document.getElementById('noteHtmlLoading');
+const noteHtmlError = document.getElementById('noteHtmlError');
+const noteHtmlDisplay = document.getElementById('noteHtmlDisplay');
+
+// New DOM elements for HTML button
+const viewAsHtmlBtn = document.getElementById('viewAsHtmlBtn');
+
 // State
 let isAuthenticated = false;
 let statusCheckInterval = null;
@@ -74,6 +84,7 @@ function updateUI() {
         noteContentArea.classList.add('hidden');
         if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden');
         if (noteMarkdownArea) noteMarkdownArea.classList.add('hidden');
+        if (noteHtmlArea) noteHtmlArea.classList.add('hidden');
         cachedNotebooks = null;
         cachedNotesMetadata = null;
         currentNoteData = null;
@@ -212,6 +223,7 @@ async function fetchAndDisplayNotebooks(forceRefresh = false) {
     if (noteContentDisplay) noteContentDisplay.textContent = '';
     if (noteAttachmentsList) noteAttachmentsList.innerHTML = '';
     if (noteMarkdownArea) noteMarkdownArea.classList.add('hidden');
+    if (noteHtmlArea) noteHtmlArea.classList.add('hidden');
     currentNoteData = null;
 
     notebookSelectionArea.classList.remove('hidden');
@@ -274,6 +286,7 @@ async function startExport() {
     noteContentArea.classList.add('hidden'); 
     if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); 
     if (noteMarkdownArea) noteMarkdownArea.classList.add('hidden');
+    if (noteHtmlArea) noteHtmlArea.classList.add('hidden');
     currentNoteData = null;
     cachedNotesMetadata = null;
 
@@ -341,7 +354,9 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     noteContentError.classList.add('hidden');
     noteContentDisplay.textContent = '';
     viewAsMarkdownBtn.classList.add('hidden');
+    viewAsHtmlBtn.classList.add('hidden');
     noteMarkdownArea.classList.add('hidden');
+    noteHtmlArea.classList.add('hidden');
     currentNoteData = null;
 
     noteAttachmentsArea.classList.remove('hidden');
@@ -361,6 +376,7 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
         noteContentDisplay.textContent = note.content; 
         selectedNoteTitle.textContent = `Note Content: ${note.title}`;
         viewAsMarkdownBtn.classList.remove('hidden');
+        viewAsHtmlBtn.classList.remove('hidden');
 
         if (note.attachments && note.attachments.length > 0) {
             note.attachments.forEach(att => {
@@ -397,6 +413,7 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
         noteContentError.classList.remove('hidden');
         noteAttachmentsArea.classList.add('hidden'); 
         viewAsMarkdownBtn.classList.add('hidden');
+        viewAsHtmlBtn.classList.add('hidden');
         currentNoteData = null;
     }
 }
@@ -446,12 +463,58 @@ async function displayNoteAsMarkdown() {
     }
 }
 
+async function displayNoteAsHtml() {
+    if (!currentNoteData || !currentNoteData.content) {
+        showStatus("No note content available to convert.", "error");
+        return;
+    }
+
+    noteHtmlArea.classList.remove('hidden');
+    selectedNoteHtmlTitle.textContent = `Note Content (HTML): ${currentNoteData.title}`;
+    noteHtmlLoading.classList.remove('hidden');
+    noteHtmlError.classList.add('hidden');
+    noteHtmlDisplay.textContent = '';
+
+    try {
+        const response = await fetch(`${API_BASE}/notes/convert`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ 
+                enml_content: currentNoteData.content,
+                target_format: 'html' 
+            }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Failed to convert note to HTML.' }));
+            throw new Error(errorData.detail || `Error ${response.status}`);
+        }
+
+        const conversionResult = await response.json();
+        noteHtmlLoading.classList.add('hidden');
+        noteHtmlDisplay.textContent = conversionResult.converted_content;
+
+    } catch (error) {
+        console.error('Error converting note to HTML:', error);
+        noteHtmlLoading.classList.add('hidden');
+        let displayMessage = error.message;
+        if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+            displayMessage = "Cannot connect to the server to convert note to HTML. Please ensure it is running.";
+        }
+        noteHtmlError.textContent = `Error: ${displayMessage}`;
+        noteHtmlError.classList.remove('hidden');
+    }
+}
+
 // Event listeners
 loginBtn.addEventListener('click', startLogin);
 logoutBtn.addEventListener('click', logout);
 exportBtn.addEventListener('click', startExport);
 refreshNotebooksBtn.addEventListener('click', () => fetchAndDisplayNotebooks(true));
 viewAsMarkdownBtn.addEventListener('click', displayNoteAsMarkdown);
+viewAsHtmlBtn.addEventListener('click', displayNoteAsHtml);
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
