@@ -139,7 +139,8 @@ temp/
 # -----------------------------------------------------------------------------
 
 # Development scripts (temporary)
-test_*.py
+# Ignore root-level test scripts but keep tests/ directory
+/test_*.py
 run_*.sh
 debug_*.py
 
