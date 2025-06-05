@@ -105,6 +105,27 @@
             <h3>Export Progress</h3>
             <div id="progressInfo"></div>
         </div>
+
+        <hr style="margin: 30px 0;">
+
+        <div id="notesArea" class="hidden" style="margin-top: 20px;">
+            <h4>Fetched Notes:</h4>
+            <div id="notesListLoading" class="status info hidden">Loading notes list...</div>
+            <div id="notesListError" class="status error hidden"></div>
+            <div id="notesListContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #ccc; padding: 10px; margin-bottom: 15px;">
+                <!-- Note titles will be dynamically populated here -->
+            </div>
+        </div>
+
+        <div id="noteContentArea" class="hidden" style="margin-top: 20px;">
+            <h4 id="selectedNoteTitle">Note Content:</h4>
+            <div id="noteContentLoading" class="status info hidden">Loading note content...</div>
+            <div id="noteContentError" class="status error hidden"></div>
+            <pre id="noteContentDisplay" style="background-color: #f0f0f0; padding: 15px; border-radius: 5px; max-height: 400px; overflow-y: auto; white-space: pre-wrap; word-wrap: break-word;">
+                <!-- Note ENML content will be displayed here -->
+            </pre>
+        </div>
+
     </div>
 
     <script src="renderer.js"></script>

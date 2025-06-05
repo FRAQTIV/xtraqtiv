@@ -17,6 +17,17 @@ const notebookListLoading = document.getElementById('notebookListLoading');
 const notebookListError = document.getElementById('notebookListError');
 const notebookListContainer = document.getElementById('notebookListContainer');
 
+// New DOM elements for notes display
+const notesArea = document.getElementById('notesArea');
+const notesListLoading = document.getElementById('notesListLoading');
+const notesListError = document.getElementById('notesListError');
+const notesListContainer = document.getElementById('notesListContainer');
+const noteContentArea = document.getElementById('noteContentArea');
+const selectedNoteTitle = document.getElementById('selectedNoteTitle');
+const noteContentLoading = document.getElementById('noteContentLoading');
+const noteContentError = document.getElementById('noteContentError');
+const noteContentDisplay = document.getElementById('noteContentDisplay');
+
 // State
 let isAuthenticated = false;
 let statusCheckInterval = null;
@@ -41,8 +52,10 @@ function updateUI() {
         loginSection.classList.remove('hidden');
         loggedInSection.classList.add('hidden');
         exportSection.classList.add('hidden');
-        notebookSelectionArea.classList.add('hidden'); // Hide notebook section on logout
-        notebookListContainer.innerHTML = ''; // Clear notebooks on logout
+        notebookSelectionArea.classList.add('hidden'); 
+        notebookListContainer.innerHTML = ''; 
+        notesArea.classList.add('hidden'); // Hide notes area on logout
+        noteContentArea.classList.add('hidden'); // Hide note content area on logout
     }
 }
 
@@ -145,6 +158,8 @@ function stopStatusPolling() {
 
 // New function to fetch and display notebooks
 async function fetchAndDisplayNotebooks() {
+    notesArea.classList.add('hidden'); // Hide notes list when notebooks are (re)loaded
+    noteContentArea.classList.add('hidden'); // Hide note content when notebooks are (re)loaded
     notebookSelectionArea.classList.remove('hidden');
     notebookListLoading.classList.remove('hidden');
     notebookListError.classList.add('hidden');
@@ -202,30 +217,91 @@ async function fetchAndDisplayNotebooks() {
 }
 
 async function startExport() {
-    const selectedNotebooks = Array.from(document.querySelectorAll('input[name="notebook"]:checked'))
+    const selectedNotebookGuids = Array.from(document.querySelectorAll('input[name="notebook"]:checked'))
                                 .map(cb => cb.value);
 
-    if (selectedNotebooks.length === 0) {
-        showStatus('Please select at least one notebook to export.', 'error');
+    if (selectedNotebookGuids.length === 0) {
+        showStatus('Please select at least one notebook.', 'error');
         return;
     }
 
+    showStatus(`Fetching notes for ${selectedNotebookGuids.length} notebook(s)...`, 'info');
+    exportBtn.disabled = true;
+    notesArea.classList.remove('hidden');
+    notesListLoading.classList.remove('hidden');
+    notesListError.classList.add('hidden');
+    notesListContainer.innerHTML = '';
+    noteContentArea.classList.add('hidden'); // Hide previous content
+
     try {
-        showStatus(`Starting export for ${selectedNotebooks.length} notebook(s)...`, 'info');
-        exportBtn.disabled = true;
-        exportSection.classList.remove('hidden');
-        progressInfo.textContent = `Selected notebooks: ${selectedNotebooks.join(', ')}. Preparing export...`;
-        
-        // TODO: Implement actual export functionality using selectedNotebooks
-        console.log('Selected notebook GUIDs for export:', selectedNotebooks);
-        showStatus('Export functionality with selected notebooks coming soon!', 'info');
-        
+        const response = await fetch(`${API_BASE}/notes/fetch-metadata`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(selectedNotebookGuids),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve notes metadata.' }));
+            throw new Error(errorData.detail || `Error ${response.status}`);
+        }
+        const notesMetadata = await response.json();
+        notesListLoading.classList.add('hidden');
+        exportBtn.disabled = false;
+
+        if (notesMetadata.length === 0) {
+            notesListContainer.innerHTML = '<p>No notes found in selected notebook(s).</p>';
+            showStatus('No notes found.', 'info');
+            return;
+        }
+
+        notesMetadata.forEach(noteMeta => {
+            const noteDiv = document.createElement('div');
+            noteDiv.textContent = noteMeta.title;
+            noteDiv.style.padding = '5px';
+            noteDiv.style.cursor = 'pointer';
+            noteDiv.style.borderBottom = '1px solid #eee';
+            noteDiv.addEventListener('mouseover', () => noteDiv.style.backgroundColor = '#f0f0f0');
+            noteDiv.addEventListener('mouseout', () => noteDiv.style.backgroundColor = 'transparent');
+            noteDiv.addEventListener('click', () => fetchAndDisplayNoteContent(noteMeta.guid, noteMeta.title));
+            notesListContainer.appendChild(noteDiv);
+        });
+        showStatus(`Found ${notesMetadata.length} notes. Click a title to view content.`, 'success');
+
     } catch (error) {
-        console.error('Export error:', error);
-        showStatus('Export failed. Please try again.', 'error');
-    } finally {
-        // Keep exportBtn disabled for now, or re-enable if it's a one-off attempt
-        // exportBtn.disabled = false; 
+        console.error('Error fetching notes metadata:', error);
+        notesListLoading.classList.add('hidden');
+        notesListError.textContent = `Error fetching notes: ${error.message}`;
+        notesListError.classList.remove('hidden');
+        exportBtn.disabled = false;
+        showStatus('Error fetching notes.', 'error');
+    }
+}
+
+async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
+    noteContentArea.classList.remove('hidden');
+    selectedNoteTitle.textContent = `Note Content: ${noteTitle}`;
+    noteContentLoading.classList.remove('hidden');
+    noteContentError.classList.add('hidden');
+    noteContentDisplay.textContent = '';
+
+    try {
+        const response = await fetch(`${API_BASE}/notes/${noteGuid}/content`);
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve note content.' }));
+            throw new Error(errorData.detail || `Error ${response.status}`);
+        }
+        const note = await response.json();
+        noteContentLoading.classList.add('hidden');
+        noteContentDisplay.textContent = note.content; // Displaying ENML as plain text for now
+        selectedNoteTitle.textContent = `Note Content: ${note.title}`; // Update title with full note data
+
+    } catch (error) {
+        console.error(`Error fetching content for note ${noteGuid}:`, error);
+        noteContentLoading.classList.add('hidden');
+        noteContentError.textContent = `Error fetching note content: ${error.message}`;
+        noteContentError.classList.remove('hidden');
     }
 }
 
