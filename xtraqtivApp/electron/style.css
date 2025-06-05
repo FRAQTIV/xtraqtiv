@@ -1,4 +1,4 @@
-/* Basic styles for Evernote Extractor */
+/* Basic styles for xtraqtiv */
 body {
     font-family: sans-serif;
     margin: 20px;
@@ -11,4 +11,37 @@ body {
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+/* Notebook List Styling */
+#notebooksList li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+#notebooksList li:hover {
+    background-color: #f0f0f0;
+}
+
+#notebooksList li.selected {
+    background-color: #e0e0f0; /* A distinct background for selected item */
+    font-weight: bold;
+    color: #333;
+}
+
+/* Notes List Styling (basic) */
+#notesList li {
+    padding: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+/* General class for list styling if needed elsewhere */
+.clickable-list-item {
+    cursor: pointer;
+}
+
+.clickable-list-item:hover {
+    background-color: #f9f9f9;
 } 

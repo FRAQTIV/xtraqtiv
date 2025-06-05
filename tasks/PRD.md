@@ -1,148 +1,106 @@
-# Product Requirements Document: Evernote Extractor
+# Product Requirements Document: Evernote Extractor Initial Functionality
 
 ## 1. Overview
 
 **Product Name:** Evernote Extractor  
-**Version:** 1.0 (Migration Release)  
-**Goal:** Cross-platform desktop application for unlimited Evernote data export with Obsidian integration
+**Version:** 1.0 (Initial Release)  
+**Goal:** Enable unlimited extraction and export of Evernote data with cross-platform compatibility and integration with Obsidian/Zotero.
 
 ## 2. Background & Problem Statement
 
-The original Swift/macOS implementation had critical limitations:
-- **Platform restriction** to macOS only
-- **Export limitations** (100-item restriction)
-- **No modern integrations** with popular note-taking systems
-- **Maintenance challenges** with native macOS dependencies
+The current Swift/macOS implementation has limitations:
+- Platform restriction to macOS only
+- Limited data extraction capabilities (100-item limit)
+- No integration with modern note-taking systems
+- Maintenance challenges with Swift/macOS dependencies
 
 ## 3. Solution
 
-**New Architecture: Python + Electron**
-- **Backend:** FastAPI with OAuth 1.0a authentication
-- **Frontend:** Cross-platform Electron desktop application
-- **Security:** Secure credential storage using system keychains
-- **Scalability:** Architecture prepared for unlimited data export
-
-## 4. Target Users
-
-- **Evernote users** seeking to migrate to modern note-taking systems
-- **Obsidian users** wanting to import Evernote data
-- **Researchers and writers** needing bulk data export capabilities
-- **Cross-platform users** (Windows, macOS, Linux)
-
-## 5. Core Features
-
-### Phase 1: Authentication & Architecture ✅ COMPLETE
-- OAuth 1.0a authentication with Evernote API
-- Secure cross-platform credential storage
-- Modern Electron desktop interface
-- FastAPI backend with RESTful endpoints
-
-### Phase 2: Data Extraction (Next)
-- Unlimited notebook and note fetching
-- Attachment preservation and download
-- Progress tracking and error handling
-- Batch processing capabilities
-
-### Phase 3: Format Conversion
+Migrate to Python + Electron architecture providing:
+- Cross-platform compatibility (Windows, macOS, Linux)
+- Unlimited data export capabilities
 - ENML → Markdown conversion
-- Metadata preservation (tags, dates, locations)
-- File organization and naming strategies
-- Custom export templates
+- Direct integration with Obsidian and Zotero
+- Modern, maintainable codebase
 
-### Phase 4: Integration
-- Obsidian vault-ready output format
-- Zotero integration for research notes
-- Custom export configurations
-- Automated folder structures
+## 4. Core Requirements
 
-## 6. Technical Requirements
+### 4.1 Authentication
+- OAuth integration with Evernote API
+- Secure token storage using system keychain
+- Production environment support
+- Session management
 
-### Performance
-- Handle 10,000+ notes efficiently
-- Progress indicators for long operations
-- Background processing capabilities
-- Memory-efficient streaming
+### 4.2 Data Fetching
+- Unlimited export capability (beyond 100-item limit)
+- Support for all note types and attachments
+- Batch processing for large datasets
+- Progress tracking and error handling
 
-### Security
-- OAuth 1.0a compliance
-- Secure credential storage (Windows Credential Manager, macOS Keychain, Linux Secret Service)
-- No credential logging or transmission
-- Production API environment
+### 4.3 Conversion & Export
+- ENML to Markdown conversion
+- Obsidian-compatible format
+- Zotero integration support
+- File organization and naming
 
-### Compatibility
-- **Windows:** 10+ (64-bit)
-- **macOS:** 10.14+ (Mojave and later)
-- **Linux:** Ubuntu 18.04+, other major distributions
-- **Python:** 3.8+ backend requirements
-- **Node.js:** 16+ for Electron frontend
+### 4.4 User Interface
+- Electron-based cross-platform UI
+- Simple authentication flow
+- Progress monitoring
+- Export configuration options
 
-## 7. User Experience
+### 4.5 Security & Privacy
+- Local credential storage
+- Secure API communication
+- Data privacy compliance
+- No cloud storage of user data
 
-### Installation
-1. Download platform-specific installer
-2. One-click installation process
-3. Automatic dependency handling
+## 5. Technical Architecture
 
-### Authentication
-1. Click "Login to Evernote" button
-2. System browser opens for OAuth
-3. Automatic detection of successful authentication
-4. Secure token storage for future sessions
+### Backend (Python/FastAPI)
+- FastAPI for API endpoints
+- Evernote SDK integration
+- Keyring for credential management
+- ENML processing libraries
 
-### Export Process
-1. Select notebooks/notes for export
-2. Choose output format and destination
-3. Monitor real-time progress
-4. Review export summary and any errors
+### Frontend (Electron)
+- Cross-platform desktop application
+- API communication with backend
+- Progress monitoring interface
+- Export configuration UI
 
-## 8. Success Metrics
+## 6. Success Metrics
 
-- **Adoption:** 1000+ successful installations in first quarter
-- **Reliability:** 99%+ successful authentication rate
-- **Performance:** Export 1000 notes in under 5 minutes
-- **User Satisfaction:** 4.5+ star rating on user feedback
+- Successful authentication with Evernote
+- Export of >100 items without limitations
+- Cross-platform deployment working
+- Obsidian-compatible output generated
+- Secure credential storage implemented
 
-## 9. Development Phases
+## 7. Timeline
 
-### Phase 1: Foundation ✅ COMPLETE
-- Authentication system
-- Basic UI framework
-- Cross-platform architecture
-- Documentation and setup
+**Phase 1: Foundation (Current)**
+- Backend API with authentication ✓
+- Basic Electron frontend ✓
+- OAuth flow implementation ✓
+- Secure token storage ✓
 
-### Phase 2: Core Functionality (Next)
-- Note fetching implementation
+**Phase 2: Core Functionality**
+- Data fetching implementation
+- ENML to Markdown conversion
+- Batch processing capabilities
 - Progress tracking
-- Error handling
-- Basic export capabilities
 
-### Phase 3: Advanced Features
-- Format conversion (ENML → Markdown)
-- Attachment handling
-- Metadata preservation
-- Export customization
-
-### Phase 4: Integrations
-- Obsidian compatibility
-- Zotero integration
+**Phase 3: Enhancement**
+- Obsidian integration
+- Zotero support
 - Advanced export options
-- User preferences
+- UI/UX improvements
 
-## 10. Risk Mitigation
+## 8. Dependencies
 
-### Technical Risks
-- **Evernote API changes:** Use stable production API, implement version checking
-- **Rate limiting:** Implement respectful request throttling
-- **Large data handling:** Stream processing, memory management
-
-### User Experience Risks
-- **Authentication complexity:** Streamlined OAuth flow with clear instructions
-- **Cross-platform issues:** Extensive testing on all target platforms
-- **Data integrity:** Validation checks and backup mechanisms
-
-## 11. Future Considerations
-
-- **Multi-account support** for users with multiple Evernote accounts
-- **Selective sync** for ongoing synchronization
-- **Plugin system** for custom export formats
-- **Cloud storage integration** for direct export to services
+- Evernote API v3
+- Python 3.8+
+- Electron framework
+- FastAPI
+- System keychain services 

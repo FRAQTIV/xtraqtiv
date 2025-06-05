@@ -1,54 +1,49 @@
-import requests
-import urllib.parse
+import os
 from evernote.api.client import EvernoteClient
-import keyring
+from dotenv import load_dotenv
 
-def get_request_token(consumer_key, consumer_secret, sandbox=False):
-    """Get OAuth request token from Evernote"""
+# Load environment variables from .env if present
+load_dotenv()
+
+def mask(s, show=4):
+    if not s or len(s) <= show * 2:
+        return '*' * len(s)
+    return s[:show] + '*' * (len(s) - show * 2) + s[-show:]
+
+# You need to register your app at https://dev.evernote.com/doc/ to get these
+CONSUMER_KEY = os.environ.get('EVERNOTE_CONSUMER_KEY', 'YOUR_CONSUMER_KEY')
+CONSUMER_SECRET = os.environ.get('EVERNOTE_CONSUMER_SECRET', 'YOUR_CONSUMER_SECRET')
+SANDBOX = True  # Set to False for production
+
+TOKEN_FILE = os.path.expanduser('~/.evernote_token')
+
+def authenticate():
+    print(f"Using Evernote key: {mask(CONSUMER_KEY)}")
+    print(f"Using Evernote secret: {mask(CONSUMER_SECRET)}")
+    # Try to load token from file
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, 'r') as f:
+            auth_token = f.read().strip()
+        print("Loaded existing Evernote auth token.")
+        return EvernoteClient(token=auth_token, sandbox=SANDBOX)
+
     client = EvernoteClient(
-        consumer_key=consumer_key,
-        consumer_secret=consumer_secret,
-        sandbox=sandbox
+        consumer_key=CONSUMER_KEY,
+        consumer_secret=CONSUMER_SECRET,
+        sandbox=SANDBOX
     )
-    
-    callback_url = "http://localhost:8000/auth/callback"
-    request_token = client.get_request_token(callback_url)
-    
-    # Generate authorization URL
+    request_token = client.get_request_token('http://localhost:5000')
     auth_url = client.get_authorize_url(request_token)
-    
-    return (
+    print(f"Go to the following URL in your browser to authorize:\n{auth_url}")
+    print("After authorization, paste the provided verification code here.")
+    oauth_verifier = input("Verification code: ").strip()
+    auth_token = client.get_access_token(
         request_token['oauth_token'],
-        request_token['oauth_token_secret'], 
-        auth_url
-    )
-
-def get_access_token(consumer_key, consumer_secret, request_token, request_token_secret, oauth_verifier, sandbox=False):
-    """Exchange request token for access token"""
-    client = EvernoteClient(
-        consumer_key=consumer_key,
-        consumer_secret=consumer_secret,
-        sandbox=sandbox
-    )
-    
-    access_token = client.get_access_token(
-        request_token,
-        request_token_secret,
+        request_token['oauth_token_secret'],
         oauth_verifier
     )
-    
-    return access_token, ""  # Evernote returns token directly
-
-def create_evernote_client(consumer_key, consumer_secret, access_token, sandbox=False):
-    """Create authenticated Evernote client"""
-    return EvernoteClient(
-        consumer_key=consumer_key,
-        consumer_secret=consumer_secret,
-        token=access_token,
-        sandbox=sandbox
-    )
-
-def get_stored_credentials():
-    """Retrieve stored credentials from keyring"""
-    access_token = keyring.get_password("evernote_extractor", "access_token")
-    return access_token if access_token else None
+    # Save token for future use
+    with open(TOKEN_FILE, 'w') as f:
+        f.write(auth_token)
+    print("Authentication successful. Token saved.")
+    return EvernoteClient(token=auth_token, sandbox=SANDBOX) 

@@ -1,6 +1,7 @@
 evernote3
+requests
+flask
+python-dotenv
 fastapi
 uvicorn
-keyring
-python-dotenv
-requests
+keyring 

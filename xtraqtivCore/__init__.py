@@ -1,1 +1,1 @@
-# xtraqtivCore - Python backend for Evernote data extraction 
+ 

@@ -10,15 +10,6 @@ const loginSection = document.getElementById('loginSection');
 const loggedInSection = document.getElementById('loggedInSection');
 const exportSection = document.getElementById('exportSection');
 const progressInfo = document.getElementById('progressInfo');
-const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');
-const appInfo = document.getElementById('appInfo');
-
-// New DOM elements for notebooks
-const loadNotebooksBtn = document.getElementById('loadNotebooksBtn');
-const notebooksSection = document.getElementById('notebooksSection');
-const notebooksList = document.getElementById('notebooksList');
-const notebooksStatus = document.getElementById('notebooksStatus');
 
 // State
 let isAuthenticated = false;
@@ -37,16 +28,12 @@ function hideStatus() {
 
 function updateUI() {
     if (isAuthenticated) {
-        loginSection.style.display = 'none';
-        loggedInSection.classList.add('visible');
-        // Initially hide notebooks section until loaded
-        // notebooksSection.classList.remove('visible'); 
+        loginSection.classList.add('hidden');
+        loggedInSection.classList.remove('hidden');
     } else {
-        loginSection.style.display = 'block';
-        loggedInSection.classList.remove('visible');
-        exportSection.classList.remove('visible');
-        notebooksSection.classList.remove('visible'); // Hide notebooks if not authenticated
-        notebooksList.innerHTML = ''; // Clear list on logout
+        loginSection.classList.remove('hidden');
+        loggedInSection.classList.add('hidden');
+        exportSection.classList.add('hidden');
     }
 }
 
@@ -56,172 +43,122 @@ async function checkAuthStatus() {
         const response = await fetch(`${API_BASE}/auth/status`);
         const data = await response.json();
         isAuthenticated = data.authenticated;
-        return data;
+        updateUI();
+        
+        if (isAuthenticated) {
+            showStatus('Connected to Evernote', 'success');
+        } else {
+            hideStatus();
+        }
     } catch (error) {
         console.error('Error checking auth status:', error);
-        return { authenticated: false, error: error.message };
+        showStatus('Error connecting to backend. Make sure the Python server is running.', 'error');
+        isAuthenticated = false;
+        updateUI();
     }
 }
 
-async function startAuth() {
+async function startLogin() {
     try {
         showStatus('Starting authentication...', 'info');
-        const response = await fetch(`${API_BASE}/auth/start`);
+        loginBtn.disabled = true;
+        
+        const response = await fetch(`${API_BASE}/auth/start`, { method: 'POST' });
         const data = await response.json();
         
         if (data.auth_url) {
             showStatus('Opening browser for authentication...', 'info');
-            await window.electronAPI.openExternal(data.auth_url);
             
-            // Start polling for auth status
-            startAuthPolling();
+            // Open the auth URL in the system browser
+            if (window.electronAPI && window.electronAPI.openExternal) {
+                await window.electronAPI.openExternal(data.auth_url);
+            } else {
+                // Fallback for development
+                window.open(data.auth_url, '_blank');
+            }
+            
+            // Start polling for authentication completion
+            startStatusPolling();
         } else {
-            showStatus('Failed to start authentication', 'error');
+            throw new Error('No auth URL received');
         }
     } catch (error) {
-        console.error('Error starting auth:', error);
-        showStatus(`Error: ${error.message}`, 'error');
+        console.error('Login error:', error);
+        showStatus('Login failed. Please try again.', 'error');
+        loginBtn.disabled = false;
     }
 }
 
 async function logout() {
     try {
         showStatus('Logging out...', 'info');
-        await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
-        isAuthenticated = false;
-        notebooksSection.classList.remove('visible'); // Hide notebooks on logout
-        notebooksList.innerHTML = ''; // Clear list on logout
-        notebooksStatus.textContent = ''; // Clear status on logout
-        updateUI();
-        showStatus('Logged out successfully', 'success');
-        stopAuthPolling();
+        logoutBtn.disabled = true;
+        
+        const response = await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+        
+        if (response.ok) {
+            isAuthenticated = false;
+            updateUI();
+            hideStatus();
+            stopStatusPolling();
+        } else {
+            throw new Error('Logout failed');
+        }
     } catch (error) {
-        console.error('Error logging out:', error);
-        showStatus(`Logout error: ${error.message}`, 'error');
+        console.error('Logout error:', error);
+        showStatus('Logout failed. Please try again.', 'error');
+    } finally {
+        logoutBtn.disabled = false;
     }
 }
 
-async function startExport() {
-    exportSection.classList.add('visible');
-    progressText.textContent = 'Export feature coming in Phase 2...';
-    progressFill.style.width = '100%';
-    
-    // Placeholder for future export functionality
-    setTimeout(() => {
-        progressText.textContent = 'Export functionality will be available soon!';
-    }, 2000);
-}
-
-// Auth polling
-function startAuthPolling() {
-    if (statusCheckInterval) return;
+function startStatusPolling() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+    }
     
     statusCheckInterval = setInterval(async () => {
-        const authData = await checkAuthStatus();
-        if (authData.authenticated) {
-            isAuthenticated = true;
-            updateUI();
-            showStatus('Authentication successful!', 'success');
-            stopAuthPolling();
+        await checkAuthStatus();
+        
+        if (isAuthenticated) {
+            stopStatusPolling();
+            loginBtn.disabled = false;
         }
-    }, 2000);
+    }, 2000); // Check every 2 seconds
 }
 
-function stopAuthPolling() {
+function stopStatusPolling() {
     if (statusCheckInterval) {
         clearInterval(statusCheckInterval);
         statusCheckInterval = null;
     }
 }
 
-// New function to fetch and display notebooks
-async function fetchAndDisplayNotebooks() {
-    if (!isAuthenticated) {
-        notebooksStatus.textContent = 'Please login first.';
-        notebooksSection.classList.remove('visible');
-        return;
-    }
-
-    notebooksSection.classList.add('visible');
-    notebooksList.innerHTML = ''; // Clear previous list
-    notebooksStatus.innerHTML = '<span class="spinner"></span> Loading notebooks...';
-
+async function startExport() {
     try {
-        const response = await fetch(`${API_BASE}/notebooks`);
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => ({ detail: response.statusText }));
-            throw new Error(`Failed to load notebooks: ${errorData.detail || response.statusText}`);
-        }
-
-        const notebooksData = await response.json();
-
-        if (notebooksData.length === 0) {
-            notebooksStatus.textContent = 'No notebooks found.';
-        } else {
-            notebooksData.forEach(nb => {
-                const li = document.createElement('li');
-                li.style.padding = '8px 0';
-                li.style.borderBottom = '1px solid #eee';
-                li.textContent = `${nb.name} (${nb.noteCount !== undefined ? nb.noteCount : 'N/A'} notes)`;
-                if (nb.defaultNotebook) {
-                    const defaultSpan = document.createElement('span');
-                    defaultSpan.textContent = ' (Default)';
-                    defaultSpan.style.color = '#7f8c8d';
-                    defaultSpan.style.fontSize = '0.9em';
-                    li.appendChild(defaultSpan);
-                }
-                notebooksList.appendChild(li);
-            });
-            notebooksStatus.textContent = `Found ${notebooksData.length} notebook(s).`;
-        }
+        showStatus('Starting export...', 'info');
+        exportBtn.disabled = true;
+        exportSection.classList.remove('hidden');
+        progressInfo.textContent = 'Preparing export...';
+        
+        // TODO: Implement actual export functionality
+        // This will be implemented in Phase 2
+        showStatus('Export functionality coming in Phase 2!', 'info');
+        
     } catch (error) {
-        console.error('Error fetching notebooks:', error);
-        notebooksStatus.textContent = `Error: ${error.message}`;
+        console.error('Export error:', error);
+        showStatus('Export failed. Please try again.', 'error');
+    } finally {
+        exportBtn.disabled = false;
     }
 }
 
 // Event listeners
-loginBtn.addEventListener('click', startAuth);
+loginBtn.addEventListener('click', startLogin);
 logoutBtn.addEventListener('click', logout);
 exportBtn.addEventListener('click', startExport);
-loadNotebooksBtn.addEventListener('click', fetchAndDisplayNotebooks); // New event listener
 
-// Initialize app
-async function initApp() {
-    // Load app info
-    try {
-        const appData = await window.electronAPI.getAppInfo();
-        appInfo.textContent = `v${appData.version} • Electron ${appData.electronVersion}`;
-    } catch (error) {
-        appInfo.textContent = 'Evernote Extractor v1.0.0';
-    }
-    
-    // Check initial auth status
-    showStatus('Checking authentication status...', 'info');
-    const authData = await checkAuthStatus();
-    
-    if (authData.authenticated) {
-        isAuthenticated = true;
-        showStatus('Already authenticated', 'success');
-    } else {
-        hideStatus();
-    }
-    
-    updateUI();
-}
-
-// Start the app when DOM is loaded
-document.addEventListener('DOMContentLoaded', initApp);
-
-// Handle app focus (check auth status when app regains focus)
-window.addEventListener('focus', async () => {
-    if (!isAuthenticated) {
-        const authData = await checkAuthStatus();
-        if (authData.authenticated) {
-            isAuthenticated = true;
-            updateUI();
-            showStatus('Authentication detected!', 'success');
-            stopAuthPolling();
-        }
-    }
-});
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+    checkAuthStatus();
+}); 

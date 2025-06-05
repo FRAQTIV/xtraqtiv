@@ -12,15 +12,15 @@ A modern Python + Electron application that overcomes Evernote's 100-item export
 - Production Evernote API integration
 
 ### 📱 **Desktop Application**
-- Modern Electron-based UI with beautiful gradients and animations
+- Modern Electron-based UI
 - Cross-platform support (Windows, macOS, Linux)
 - Secure communication between frontend and backend
 - System browser integration for OAuth flow
 
-### 🚀 **Data Export** *(Phase 2 - Coming Soon)*
+### 🚀 **Data Export** *(Coming Soon)*
 - Unlimited note and notebook export
 - ENML → Markdown conversion
-- Attachment preservation and download
+- Attachment preservation
 - Obsidian-compatible output format
 - Zotero integration support
 
@@ -153,44 +153,12 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ### Authentication Issues
 - Ensure FastAPI backend is running on port 8000
 - Check that your system browser can access `localhost:8000`
-- Verify Evernote API credentials are configured
+- Verify Evernote API credentials
 
 ### Cross-Platform Notes
 - **Linux**: Requires `python3-keyring` for credential storage
 - **Windows**: Uses Windows Credential Manager automatically
 - **macOS**: Uses Keychain access automatically
-
-### Development Setup
-```bash
-# Install development dependencies
-pip install -r requirements.txt
-cd xtraqtivApp/electron && npm install
-
-# Run in development mode
-# Terminal 1:
-uvicorn xtraqtivCore.api:app --reload --port 8000
-
-# Terminal 2:
-cd xtraqtivApp/electron && npm run dev
-```
-
-## 🌟 What's New in v1.0
-
-### 🚀 **Complete Architecture Migration**
-- **BREAKING CHANGE**: Migrated from Swift/macOS to Python + Electron
-- **Cross-platform**: Now supports Windows, macOS, and Linux
-- **Modern UI**: Beautiful Electron interface with gradient design
-- **Unlimited Export**: Architecture prepared for unlimited data extraction
-
-### 🔐 **Enhanced Security**
-- OAuth 1.0a compliance with Evernote production API
-- Secure credential storage using system keychains
-- Context isolation in Electron for maximum security
-
-### 📊 **Professional Development**
-- Comprehensive documentation and PRD
-- Clean project structure and development workflow
-- Professional .gitignore and dependency management
 
 ---
 
