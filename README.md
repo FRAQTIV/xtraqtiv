@@ -100,9 +100,13 @@ xtraqtiv/
 │   │   ├── index.html       # Main UI
 │   │   └── package.json     # Node.js dependencies
 │   └── main.py              # Legacy CLI (deprecated)
+├── 📁 Documentation/        # Diagrams and additional docs
 ├── 📁 tasks/                # Project Documentation
 │   ├── PRD.md              # Product Requirements
 │   └── task-breakdown.md   # Development Tasks
+├── 📁 .github/              # Git workflow documentation
+├── index.html               # Basic placeholder
+├── renderer.js              # Basic placeholder
 ├── requirements.txt         # Python dependencies
 ├── .gitignore              # Git ignore rules
 └── README.md               # This file
