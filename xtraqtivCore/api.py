@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from typing import List
 import datetime
 
-from .models import Notebook, NoteMetadata, Note
+from .models import Notebook, NoteMetadata, Note, Attachment
 
 load_dotenv()
 
@@ -193,20 +193,29 @@ def fetch_note_content(note_guid: str):
         client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
         note_store = client.get_note_store()
 
-        # Fetch the note with content and tags
-        # Parameters for getNote: token, guid, withContent, withResourcesData, withResourcesRecognition, withResourcesAlternateData
-        # The Note object returned by getNote also contains metadata like title, created, updated, tagGuids, notebookGuid etc.
-        # It can also contain a list of Tag objects if Note.tags is populated by the server.
-        en_note = note_store.getNote(note_guid, True, False, False, False)
+        # Fetch the note with content AND resource information (but not resource data)
+        # getNote(guid, withContent, withResourcesData, withResourcesRecognition, withResourcesAlternateData)
+        en_note = note_store.getNote(note_guid, True, False, False, False) # withResourcesData is False
 
-        # Resolve tag GUIDs to tag names if available in the full Note object
+        # Resolve tag GUIDs to tag names if available
         tag_names = []
-        if en_note.tags: # en_note.tags should be a list of Tag objects
+        if en_note.tags:
             tag_names = [tag.name for tag in en_note.tags if tag.name]
-        elif en_note.tagGuids: # Fallback if en_note.tags is not populated
-            # This would require an additional call per note to getNoteTagNames or a batch call if available
-            # For simplicity, we'll rely on en_note.tags or leave tagNames empty if not directly available
-            pass
+
+        # Populate attachments
+        attachments_list = []
+        if en_note.resources:
+            for res in en_note.resources:
+                attachment = Attachment(
+                    guid=res.guid,
+                    noteGuid=res.noteGuid,
+                    mime=res.mime,
+                    fileName=res.attributes.fileName if res.attributes else None,
+                    size=res.size, # This is the size of the data body from the Resource object itself
+                    width=res.attributes.width if res.attributes and res.attributes.width else None,
+                    height=res.attributes.height if res.attributes and res.attributes.height else None
+                )
+                attachments_list.append(attachment)
             
         note_data = Note(
             guid=en_note.guid,
@@ -216,11 +225,11 @@ def fetch_note_content(note_guid: str):
             notebookGuid=en_note.notebookGuid,
             tagGuids=en_note.tagGuids if en_note.tagGuids else [],
             tagNames=tag_names,
-            content=en_note.content
+            content=en_note.content,
+            attachments=attachments_list # Add the populated list
         )
         return note_data
 
     except Exception as e:
         print(f"Error fetching note content for {note_guid}: {e}")
-        # Handle specific Evernote exceptions like EDAMNotFoundException if a note isn't found
         raise HTTPException(status_code=500, detail=f"Failed to fetch note content: {str(e)}") 

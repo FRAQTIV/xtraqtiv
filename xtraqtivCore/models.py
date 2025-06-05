@@ -12,6 +12,15 @@ class Tag(BaseModel):
     guid: str
     name: str
 
+class Attachment(BaseModel):
+    guid: str
+    noteGuid: str
+    mime: str
+    fileName: Optional[str] = None
+    size: Optional[int] = None # Resource.data.size is not always populated directly, might need to fetch full resource
+    width: Optional[int] = None # From ResourceAttributes
+    height: Optional[int] = None # From ResourceAttributes
+
 class NoteMetadata(BaseModel):
     guid: str
     title: str
@@ -23,4 +32,4 @@ class NoteMetadata(BaseModel):
 
 class Note(NoteMetadata):
     content: Optional[str] = None # ENML content
-    # attachments: List[Attachment] = [] # To be added later 
+    attachments: List[Attachment] = [] # Changed from placeholder 

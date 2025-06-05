@@ -28,6 +28,11 @@ const noteContentLoading = document.getElementById('noteContentLoading');
 const noteContentError = document.getElementById('noteContentError');
 const noteContentDisplay = document.getElementById('noteContentDisplay');
 
+// New DOM elements for attachments
+const noteAttachmentsArea = document.getElementById('noteAttachmentsArea');
+const noteAttachmentsList = document.getElementById('noteAttachmentsList');
+const noAttachmentsMsg = document.getElementById('noAttachmentsMsg');
+
 // State
 let isAuthenticated = false;
 let statusCheckInterval = null;
@@ -56,6 +61,7 @@ function updateUI() {
         notebookListContainer.innerHTML = ''; 
         notesArea.classList.add('hidden'); // Hide notes area on logout
         noteContentArea.classList.add('hidden'); // Hide note content area on logout
+        if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments area on logout
     }
 }
 
@@ -160,6 +166,7 @@ function stopStatusPolling() {
 async function fetchAndDisplayNotebooks() {
     notesArea.classList.add('hidden'); // Hide notes list when notebooks are (re)loaded
     noteContentArea.classList.add('hidden'); // Hide note content when notebooks are (re)loaded
+    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments when notebooks are (re)loaded
     notebookSelectionArea.classList.remove('hidden');
     notebookListLoading.classList.remove('hidden');
     notebookListError.classList.add('hidden');
@@ -232,6 +239,7 @@ async function startExport() {
     notesListError.classList.add('hidden');
     notesListContainer.innerHTML = '';
     noteContentArea.classList.add('hidden'); // Hide previous content
+    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments initially
 
     try {
         const response = await fetch(`${API_BASE}/notes/fetch-metadata`, {
@@ -286,6 +294,11 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     noteContentError.classList.add('hidden');
     noteContentDisplay.textContent = '';
 
+    // Handle attachments display
+    noteAttachmentsArea.classList.remove('hidden'); // Show the attachments area
+    noteAttachmentsList.innerHTML = ''; // Clear previous attachments
+    noAttachmentsMsg.classList.add('hidden'); // Hide no attachments message initially
+
     try {
         const response = await fetch(`${API_BASE}/notes/${noteGuid}/content`);
         if (!response.ok) {
@@ -294,14 +307,33 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
         }
         const note = await response.json();
         noteContentLoading.classList.add('hidden');
-        noteContentDisplay.textContent = note.content; // Displaying ENML as plain text for now
-        selectedNoteTitle.textContent = `Note Content: ${note.title}`; // Update title with full note data
+        noteContentDisplay.textContent = note.content; 
+        selectedNoteTitle.textContent = `Note Content: ${note.title}`;
+
+        // Display attachments
+        if (note.attachments && note.attachments.length > 0) {
+            note.attachments.forEach(att => {
+                const li = document.createElement('li');
+                let displayText = att.fileName || 'Untitled Attachment';
+                displayText += ` (${att.mime}, ${att.size ? (att.size / 1024).toFixed(2) + ' KB' : 'size N/A'})`;
+                if (att.width && att.height) {
+                    displayText += ` [${att.width}x${att.height}]`;
+                }
+                li.textContent = displayText;
+                li.style.padding = '3px 0';
+                noteAttachmentsList.appendChild(li);
+            });
+        } else {
+            noAttachmentsMsg.classList.remove('hidden');
+        }
 
     } catch (error) {
         console.error(`Error fetching content for note ${noteGuid}:`, error);
         noteContentLoading.classList.add('hidden');
         noteContentError.textContent = `Error fetching note content: ${error.message}`;
         noteContentError.classList.remove('hidden');
+        // Also hide attachment section on error
+        noteAttachmentsArea.classList.add('hidden'); 
     }
 }
 
