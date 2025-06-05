@@ -33,3 +33,12 @@ class NoteMetadata(BaseModel):
 class Note(NoteMetadata):
     content: Optional[str] = None # ENML content
     attachments: List[Attachment] = [] # Changed from placeholder 
+
+class ConversionRequest(BaseModel):
+    enml_content: str
+    target_format: str = "markdown" # Default to markdown, can extend later
+
+class ConversionResponse(BaseModel):
+    original_format: str = "enml"
+    converted_content: str
+    converted_format: str 

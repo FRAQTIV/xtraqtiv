@@ -12,7 +12,8 @@ from typing import List
 import datetime
 from io import BytesIO
 
-from .models import Notebook, NoteMetadata, Note, Attachment
+from .models import Notebook, NoteMetadata, Note, Attachment, ConversionRequest, ConversionResponse
+from .utils import convert_enml_to_markdown
 
 load_dotenv()
 
@@ -322,4 +323,37 @@ async def fetch_attachment_data(attachment_guid: str):
         raise HTTPException(status_code=404, detail=f"Attachment with GUID {attachment_guid} not found.")
     except Exception as e:
         print(f"Error fetching attachment data for {attachment_guid}: {e}")
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while fetching attachment data: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while fetching attachment data: {str(e)}")
+
+@app.post("/notes/convert", response_model=ConversionResponse)
+async def convert_note_content(request_data: ConversionRequest):
+    if request_data.target_format.lower() != "markdown":
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Unsupported target format: {request_data.target_format}. Currently, only 'markdown' is supported."
+        )
+    
+    auth_token = get_auth_token() # Ensure user is authenticated to use conversion utility
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        markdown_content = convert_enml_to_markdown(request_data.enml_content)
+        
+        # Check if the conversion itself indicated an error (as per our utils.py implementation)
+        if markdown_content.startswith("Error converting ENML to Markdown:"):
+            # This means the utility function caught an error and returned a message
+            # We might want to log this server-side and return a more generic 500 to client
+            # or return the specific error if it's safe/informative.
+            print(f"Conversion utility error: {markdown_content}") # Log it
+            raise HTTPException(status_code=500, detail="An error occurred during content conversion.")
+
+        return ConversionResponse(
+            converted_content=markdown_content,
+            converted_format="markdown"
+            # original_format is defaulted in Pydantic model
+        )
+    except Exception as e:
+        # Catch any other unexpected errors during the process
+        print(f"Unexpected error in /notes/convert endpoint: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected server error occurred during conversion.") 
