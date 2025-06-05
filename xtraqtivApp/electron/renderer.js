@@ -5,6 +5,7 @@ const API_BASE = 'http://localhost:8000';
 const loginBtn = document.getElementById('loginBtn');
 const logoutBtn = document.getElementById('logoutBtn');
 const exportBtn = document.getElementById('exportBtn');
+const fullExportBtn = document.getElementById('fullExportBtn');
 const statusDiv = document.getElementById('status');
 const loginSection = document.getElementById('loginSection');
 const loggedInSection = document.getElementById('loggedInSection');
@@ -508,10 +509,65 @@ async function displayNoteAsHtml() {
     }
 }
 
+// New function to handle simulated full export
+async function startFullExportSimulated() {
+    const selectedNotebookGuids = Array.from(document.querySelectorAll('input[name="notebook"]:checked'))
+                                .map(cb => cb.value);
+
+    if (selectedNotebookGuids.length === 0) {
+        showStatus('Please select at least one notebook for the full export.', 'error');
+        return;
+    }
+
+    const targetFormat = 'markdown'; // For now, hardcode to markdown for the simulation
+
+    showStatus(`Starting full export simulation for ${selectedNotebookGuids.length} notebook(s) to ${targetFormat}...`, 'info');
+    if(progressInfo) progressInfo.textContent = "Initiating simulated export process... This may take a while. Check server logs for detailed progress.";
+    if(exportSection) exportSection.classList.remove('hidden'); // Show progress section
+    
+    fullExportBtn.disabled = true;
+    exportBtn.disabled = true; // Disable other actions too
+
+    try {
+        const response = await fetch(`${API_BASE}/export/notebooks`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notebook_guids: selectedNotebookGuids,
+                target_format: targetFormat,
+            }),
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.detail || `Simulated export failed with status ${response.status}`);
+        }
+
+        showStatus(result.message || 'Simulated export process finished.', 'success');
+        if(progressInfo) progressInfo.textContent = result.message || "Simulated export finished. Check server logs.";
+
+    } catch (error) {
+        console.error('Full export simulation error:', error);
+        let displayMessage = error.message;
+        if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+            displayMessage = "Cannot connect to the application server to start export. Please ensure it is running.";
+        }
+        showStatus(`Simulated export failed: ${displayMessage}`, 'error');
+        if(progressInfo) progressInfo.textContent = `Simulated export error: ${displayMessage}`;
+    } finally {
+        fullExportBtn.disabled = false;
+        exportBtn.disabled = false;
+    }
+}
+
 // Event listeners
 loginBtn.addEventListener('click', startLogin);
 logoutBtn.addEventListener('click', logout);
 exportBtn.addEventListener('click', startExport);
+fullExportBtn.addEventListener('click', startFullExportSimulated);
 refreshNotebooksBtn.addEventListener('click', () => fetchAndDisplayNotebooks(true));
 viewAsMarkdownBtn.addEventListener('click', displayNoteAsMarkdown);
 viewAsHtmlBtn.addEventListener('click', displayNoteAsHtml);

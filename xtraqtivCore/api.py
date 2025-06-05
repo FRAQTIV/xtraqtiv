@@ -11,8 +11,9 @@ from dotenv import load_dotenv
 from typing import List
 import datetime
 from io import BytesIO
+import logging # For more structured logging
 
-from .models import Notebook, NoteMetadata, Note, Attachment, ConversionRequest, ConversionResponse
+from .models import Notebook, NoteMetadata, Note, Attachment, ConversionRequest, ConversionResponse, ExportRequest, ExportResponse
 from .utils import convert_enml_to_markdown, convert_enml_to_html
 
 load_dotenv()
@@ -29,6 +30,9 @@ SANDBOX = True  # Set to False for production
 CALLBACK_URL = os.environ.get('EVERNOTE_CALLBACK_URL', 'http://localhost:8000/auth/callback')
 SERVICE_NAME = 'xtraqtiv-evernote'
 USER_ID = 'default-user'  # For now, single-user; can be extended for multi-user
+
+# Configure basic logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def get_auth_token():
     return keyring.get_password(SERVICE_NAME, USER_ID)
@@ -360,4 +364,104 @@ async def convert_note_content(request_data: ConversionRequest):
     except Exception as e:
         # Catch any other unexpected errors during the process
         print(f"Unexpected error in /notes/convert endpoint for format {target_format}: {e}")
-        raise HTTPException(status_code=500, detail=f"An unexpected server error occurred during {target_format} conversion.") 
+        raise HTTPException(status_code=500, detail=f"An unexpected server error occurred during {target_format} conversion.")
+
+@app.post("/export/notebooks", response_model=ExportResponse)
+async def export_notebooks_content(request_data: ExportRequest):
+    auth_token = get_auth_token()
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    logging.info(f"Received export request for notebooks: {request_data.notebook_guids}, format: {request_data.target_format}")
+
+    # Simulate the export process
+    try:
+        client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
+        note_store = client.get_note_store()
+
+        # 1. Fetch all notebook details to get names (optional, for logging/paths)
+        all_evernote_notebooks = note_store.listNotebooks()
+        notebook_guid_to_name = {nb.guid: nb.name for nb in all_evernote_notebooks}
+
+        for notebook_guid in request_data.notebook_guids:
+            notebook_name = notebook_guid_to_name.get(notebook_guid, "UnknownNotebook")
+            logging.info(f"Processing notebook: {notebook_name} (GUID: {notebook_guid})")
+
+            # 2. Fetch note metadata for the current notebook
+            # (Reusing logic similar to fetch_notes_metadata endpoint for one notebook)
+            note_filter = NoteFilter(notebookGuid=notebook_guid, order=NoteSortOrder.UPDATED, ascending=False)
+            result_spec = NotesMetadataResultSpec(includeTitle=True, includeTagGuids=True)
+            
+            offset = 0
+            max_notes_per_call = 50 # Keep this low for simulation to avoid long loops
+            notes_processed_in_notebook = 0
+
+            while True:
+                notes_metadata_list = note_store.findNotesMetadata(note_filter, offset, max_notes_per_call, result_spec)
+                if not notes_metadata_list.notes:
+                    break
+
+                for en_note_meta in notes_metadata_list.notes:
+                    notes_processed_in_notebook += 1
+                    logging.info(f"  Processing note: {en_note_meta.title} (GUID: {en_note_meta.guid})")
+
+                    # 3. Fetch full note content (including ENML and attachments list)
+                    # (Reusing logic similar to fetch_note_content endpoint)
+                    try:
+                        en_note = note_store.getNote(en_note_meta.guid, True, False, False, False) # withContent=True
+                        enml_content = en_note.content
+                        
+                        # 4. Convert ENML to target format
+                        converted_note_content = ""
+                        if request_data.target_format.lower() == "markdown":
+                            converted_note_content = convert_enml_to_markdown(enml_content)
+                            if converted_note_content.startswith("Error converting ENML to Markdown:"):
+                                logging.error(f"    Failed to convert note {en_note_meta.guid} to Markdown: {converted_note_content}")
+                                continue # Skip this note
+                        elif request_data.target_format.lower() == "html":
+                            converted_note_content = convert_enml_to_html(enml_content)
+                            if converted_note_content.startswith("Error converting ENML to HTML:"):
+                                logging.error(f"    Failed to convert note {en_note_meta.guid} to HTML: {converted_note_content}")
+                                continue # Skip this note
+                        else:
+                            logging.warning(f"    Unsupported target format '{request_data.target_format}' for note {en_note_meta.guid}. Skipping conversion.")
+                            continue
+                        
+                        logging.info(f"    Successfully converted note {en_note_meta.guid} to {request_data.target_format}.")
+                        logging.info(f"    SIMULATE: Saving note '{en_note_meta.title}' as {request_data.target_format.lower()} file.")
+
+                        # 5. Simulate handling attachments
+                        if en_note.resources:
+                            logging.info(f"    Found {len(en_note.resources)} attachments for note {en_note_meta.guid}.")
+                            for res_idx, resource in enumerate(en_note.resources):
+                                filename = resource.attributes.fileName if resource.attributes and resource.attributes.fileName else f"attachment_{res_idx + 1}"
+                                logging.info(f"      SIMULATE: Saving attachment '{filename}' (GUID: {resource.guid}).")
+                    
+                    except EDAMNotFoundException:
+                        logging.error(f"    Note {en_note_meta.guid} not found when trying to fetch full content. Skipping.")
+                    except Exception as note_err:
+                        logging.error(f"    Error processing note {en_note_meta.guid}: {note_err}. Skipping.")
+
+                if notes_metadata_list.startIndex + len(notes_metadata_list.notes) >= notes_metadata_list.totalNotes:
+                    break
+                offset += len(notes_metadata_list.notes)
+            
+            logging.info(f"Finished processing {notes_processed_in_notebook} notes in notebook {notebook_name}.")
+
+        logging.info("Simulated export process completed for all selected notebooks.")
+        return ExportResponse(
+            status="Simulated export completed", 
+            message="Mock export process finished. Check server logs for details."
+        )
+
+    except EDAMUserException as e:
+        logging.error(f"Evernote API User Exception during export: {e}")
+        detail = f"Evernote user error during export: {e.reason if hasattr(e, 'reason') else e.parameter}"
+        raise HTTPException(status_code=400, detail=detail)
+    except EDAMSystemException as e:
+        logging.error(f"Evernote API System Exception during export: {e}")
+        detail = f"Evernote system error during export: {e.message or 'Internal server error.'}"
+        raise HTTPException(status_code=503, detail=detail)
+    except Exception as e:
+        logging.error(f"Unexpected error during export process: {e}")
+        raise HTTPException(status_code=500, detail="An unexpected server error occurred during the export process.") 

@@ -41,4 +41,14 @@ class ConversionRequest(BaseModel):
 class ConversionResponse(BaseModel):
     original_format: str = "enml"
     converted_content: str
-    converted_format: str 
+    converted_format: str
+
+class ExportRequest(BaseModel):
+    notebook_guids: List[str]
+    target_format: str = "markdown" # e.g., "markdown", "html"
+    # Future options: include_attachments: bool = True, output_path: Optional[str] = None
+
+class ExportResponse(BaseModel):
+    status: str # e.g., "Export process started", "Export completed", "Error"
+    message: str
+    # Future: export_id: Optional[str] = None, download_link: Optional[str] = None 
