@@ -232,14 +232,18 @@ async function startExport() {
         return;
     }
 
+    // Show main status and detailed progress info
     showStatus(`Fetching notes for ${selectedNotebookGuids.length} notebook(s)...`, 'info');
+    exportSection.classList.remove('hidden'); // Make exportSection visible for progress
+    progressInfo.textContent = 'Requesting note metadata from server... Please wait.';
+    
     exportBtn.disabled = true;
     notesArea.classList.remove('hidden');
-    notesListLoading.classList.remove('hidden');
+    notesListLoading.classList.remove('hidden'); // This shows "Loading notes list..."
     notesListError.classList.add('hidden');
     notesListContainer.innerHTML = '';
-    noteContentArea.classList.add('hidden'); // Hide previous content
-    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); // Hide attachments initially
+    noteContentArea.classList.add('hidden'); 
+    if (noteAttachmentsArea) noteAttachmentsArea.classList.add('hidden'); 
 
     try {
         const response = await fetch(`${API_BASE}/notes/fetch-metadata`, {
@@ -254,28 +258,33 @@ async function startExport() {
             const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve notes metadata.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
+        progressInfo.textContent = 'Processing received note metadata...'; // Update progress
         const notesMetadata = await response.json();
+        
         notesListLoading.classList.add('hidden');
         exportBtn.disabled = false;
 
         if (notesMetadata.length === 0) {
             notesListContainer.innerHTML = '<p>No notes found in selected notebook(s).</p>';
             showStatus('No notes found.', 'info');
-            return;
+            progressInfo.textContent = 'No notes found in the selected notebook(s).';
+            // Consider hiding exportSection after a delay or if no notes found and no further action
+        } else {
+            notesMetadata.forEach(noteMeta => {
+                const noteDiv = document.createElement('div');
+                noteDiv.textContent = noteMeta.title;
+                noteDiv.style.padding = '5px';
+                noteDiv.style.cursor = 'pointer';
+                noteDiv.style.borderBottom = '1px solid #eee';
+                noteDiv.addEventListener('mouseover', () => noteDiv.style.backgroundColor = '#f0f0f0');
+                noteDiv.addEventListener('mouseout', () => noteDiv.style.backgroundColor = 'transparent');
+                noteDiv.addEventListener('click', () => fetchAndDisplayNoteContent(noteMeta.guid, noteMeta.title));
+                notesListContainer.appendChild(noteDiv);
+            });
+            showStatus(`Found ${notesMetadata.length} notes. Click a title to view content.`, 'success');
+            progressInfo.textContent = `Successfully loaded ${notesMetadata.length} note headers.`;
+            // exportSection.classList.add('hidden'); // Hide after successful load of metadata
         }
-
-        notesMetadata.forEach(noteMeta => {
-            const noteDiv = document.createElement('div');
-            noteDiv.textContent = noteMeta.title;
-            noteDiv.style.padding = '5px';
-            noteDiv.style.cursor = 'pointer';
-            noteDiv.style.borderBottom = '1px solid #eee';
-            noteDiv.addEventListener('mouseover', () => noteDiv.style.backgroundColor = '#f0f0f0');
-            noteDiv.addEventListener('mouseout', () => noteDiv.style.backgroundColor = 'transparent');
-            noteDiv.addEventListener('click', () => fetchAndDisplayNoteContent(noteMeta.guid, noteMeta.title));
-            notesListContainer.appendChild(noteDiv);
-        });
-        showStatus(`Found ${notesMetadata.length} notes. Click a title to view content.`, 'success');
 
     } catch (error) {
         console.error('Error fetching notes metadata:', error);
@@ -284,6 +293,8 @@ async function startExport() {
         notesListError.classList.remove('hidden');
         exportBtn.disabled = false;
         showStatus('Error fetching notes.', 'error');
+        progressInfo.textContent = `Error fetching notes: ${error.message}`;
+        // exportSection.classList.add('hidden'); // Optionally hide on error too
     }
 }
 
