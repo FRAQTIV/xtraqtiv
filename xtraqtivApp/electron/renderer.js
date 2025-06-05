@@ -314,12 +314,21 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
         if (note.attachments && note.attachments.length > 0) {
             note.attachments.forEach(att => {
                 const li = document.createElement('li');
+                
+                const a = document.createElement('a');
+                a.href = `${API_BASE}/attachments/${att.guid}/data`;
+                // a.target = '_blank'; // Optional: to ensure it doesn't navigate the current view, though download should prevent that.
+                // Forcing download attribute, though Content-Disposition header should handle it:
+                a.download = att.fileName || 'attachment'; 
+
                 let displayText = att.fileName || 'Untitled Attachment';
                 displayText += ` (${att.mime}, ${att.size ? (att.size / 1024).toFixed(2) + ' KB' : 'size N/A'})`;
                 if (att.width && att.height) {
                     displayText += ` [${att.width}x${att.height}]`;
                 }
-                li.textContent = displayText;
+                a.textContent = displayText;
+                
+                li.appendChild(a);
                 li.style.padding = '3px 0';
                 noteAttachmentsList.appendChild(li);
             });

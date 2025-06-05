@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse, JSONResponse, StreamingResponse
 import os
 import keyring
 from evernote.api.client import EvernoteClient
@@ -9,6 +9,7 @@ from evernote.edam.type.ttypes import NoteSortOrder
 from dotenv import load_dotenv
 from typing import List
 import datetime
+from io import BytesIO
 
 from .models import Notebook, NoteMetadata, Note, Attachment
 
@@ -232,4 +233,36 @@ def fetch_note_content(note_guid: str):
 
     except Exception as e:
         print(f"Error fetching note content for {note_guid}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch note content: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Failed to fetch note content: {str(e)}")
+
+@app.get("/attachments/{attachment_guid}/data")
+async def fetch_attachment_data(attachment_guid: str):
+    auth_token = get_auth_token()
+    if not auth_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    try:
+        client = EvernoteClient(token=auth_token, sandbox=SANDBOX)
+        note_store = client.get_note_store()
+
+        # Fetch the resource (attachment)
+        # getResource(guid, withData, withRecognition, withAttributes, withAlternateData)
+        resource = note_store.getResource(attachment_guid, True, False, True, False) # withData=True, withAttributes=True
+
+        if not resource or not resource.data or not resource.data.body:
+            raise HTTPException(status_code=404, detail="Attachment data not found or empty")
+
+        file_data = BytesIO(resource.data.body)
+        media_type = resource.mime
+        filename = resource.attributes.fileName if resource.attributes and resource.attributes.fileName else "attachment"
+        
+        headers = {
+            'Content-Disposition': f'attachment; filename="{filename}"'
+        }
+
+        return StreamingResponse(file_data, media_type=media_type, headers=headers)
+
+    except Exception as e:
+        print(f"Error fetching attachment data for {attachment_guid}: {e}")
+        # Handle specific Evernote exceptions like EDAMNotFoundException if a resource isn't found
+        raise HTTPException(status_code=500, detail=f"Failed to fetch attachment data: {str(e)}") 
