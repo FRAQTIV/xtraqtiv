@@ -1,3 +1,5 @@
+"""Functions for fetching notebooks and notes from Evernote."""
+
 from .auth import create_evernote_client, get_stored_credentials
 import os
 
