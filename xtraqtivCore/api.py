@@ -6,6 +6,7 @@ from evernote.api.client import EvernoteClient
 from evernote.edam.notestore import NoteStore
 from evernote.edam.notestore.ttypes import NotesMetadataResultSpec, NoteFilter
 from evernote.edam.type.ttypes import NoteSortOrder
+from evernote.edam.error.ttypes import EDAMUserException, EDAMSystemException, EDAMNotFoundException, EDAMErrorCode
 from dotenv import load_dotenv
 from typing import List
 import datetime
@@ -105,10 +106,22 @@ def list_notebooks():
             for nb in raw_notebooks
         ]
         return notebooks
+    except EDAMUserException as e:
+        print(f"Evernote API User Exception (list_notebooks): {e}")
+        detail = f"Evernote user error: {e.reason if hasattr(e, 'reason') else e.parameter}"
+        if e.errorCode == EDAMErrorCode.AUTH_EXPIRED or e.errorCode == EDAMErrorCode.INVALID_AUTH:
+            detail = "Evernote authentication expired or invalid. Please re-authenticate."
+            # Optionally, could also delete the stored token here if it's confirmed invalid.
+        raise HTTPException(status_code=400, detail=detail)
+    except EDAMSystemException as e:
+        print(f"Evernote API System Exception (list_notebooks): {e}")
+        detail = f"Evernote system error: {e.message or 'Internal server error from Evernote.'}"
+        if e.errorCode == EDAMErrorCode.RATE_LIMIT_REACHED:
+            detail = "Evernote API rate limit reached. Please try again later."
+        raise HTTPException(status_code=503, detail=detail) # 503 Service Unavailable
     except Exception as e:
-        # Log the exception e for debugging
         print(f"Error fetching notebooks: {e}")
-        raise HTTPException(status_code=500, detail="Failed to fetch notebooks from Evernote")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while fetching notebooks.")
 
 @app.post("/notes/fetch-metadata", response_model=List[NoteMetadata])
 def fetch_notes_metadata(notebook_guids: List[str]):
@@ -179,10 +192,21 @@ def fetch_notes_metadata(notebook_guids: List[str]):
 
         return all_notes_metadata
 
+    except EDAMUserException as e:
+        print(f"Evernote API User Exception (fetch_notes_metadata): {e}")
+        detail = f"Evernote user error: {e.reason if hasattr(e, 'reason') else e.parameter}"
+        if e.errorCode == EDAMErrorCode.AUTH_EXPIRED or e.errorCode == EDAMErrorCode.INVALID_AUTH:
+            detail = "Evernote authentication expired or invalid. Please re-authenticate."
+        raise HTTPException(status_code=400, detail=detail)
+    except EDAMSystemException as e:
+        print(f"Evernote API System Exception (fetch_notes_metadata): {e}")
+        detail = f"Evernote system error: {e.message or 'Internal server error from Evernote.'}"
+        if e.errorCode == EDAMErrorCode.RATE_LIMIT_REACHED:
+            detail = "Evernote API rate limit reached. Please try again later."
+        raise HTTPException(status_code=503, detail=detail)
     except Exception as e:
-        print(f"Error fetching notes metadata: {e}") # Log the exception
-        # Consider more specific error handling for Evernote API errors (e.g., EDAMUserException)
-        raise HTTPException(status_code=500, detail=f"Failed to fetch notes metadata: {str(e)}")
+        print(f"Error fetching notes metadata: {e}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while fetching notes metadata: {str(e)}")
 
 @app.get("/notes/{note_guid}/content", response_model=Note)
 def fetch_note_content(note_guid: str):
@@ -231,9 +255,26 @@ def fetch_note_content(note_guid: str):
         )
         return note_data
 
+    except EDAMUserException as e:
+        print(f"Evernote API User Exception (fetch_note_content for {note_guid}): {e}")
+        detail = f"Evernote user error processing note {note_guid}: {e.reason if hasattr(e, 'reason') else e.parameter}"
+        if e.errorCode == EDAMErrorCode.AUTH_EXPIRED or e.errorCode == EDAMErrorCode.INVALID_AUTH:
+            detail = "Evernote authentication expired or invalid. Please re-authenticate."
+        elif e.errorCode == EDAMErrorCode.PERMISSION_DENIED:
+             detail = f"Permission denied for note {note_guid}."
+        raise HTTPException(status_code=400, detail=detail)
+    except EDAMSystemException as e:
+        print(f"Evernote API System Exception (fetch_note_content for {note_guid}): {e}")
+        detail = f"Evernote system error processing note {note_guid}: {e.message or 'Internal server error from Evernote.'}"
+        if e.errorCode == EDAMErrorCode.RATE_LIMIT_REACHED:
+            detail = "Evernote API rate limit reached. Please try again later."
+        raise HTTPException(status_code=503, detail=detail)
+    except EDAMNotFoundException as e:
+        print(f"Evernote API Not Found Exception (fetch_note_content for {note_guid}): {e}")
+        raise HTTPException(status_code=404, detail=f"Note with GUID {note_guid} not found.")
     except Exception as e:
         print(f"Error fetching note content for {note_guid}: {e}")
-        raise HTTPException(status_code=500, detail=f"Failed to fetch note content: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while fetching note content: {str(e)}")
 
 @app.get("/attachments/{attachment_guid}/data")
 async def fetch_attachment_data(attachment_guid: str):
@@ -262,7 +303,23 @@ async def fetch_attachment_data(attachment_guid: str):
 
         return StreamingResponse(file_data, media_type=media_type, headers=headers)
 
+    except EDAMUserException as e:
+        print(f"Evernote API User Exception (fetch_attachment_data for {attachment_guid}): {e}")
+        detail = f"Evernote user error processing attachment {attachment_guid}: {e.reason if hasattr(e, 'reason') else e.parameter}"
+        if e.errorCode == EDAMErrorCode.AUTH_EXPIRED or e.errorCode == EDAMErrorCode.INVALID_AUTH:
+            detail = "Evernote authentication expired or invalid. Please re-authenticate."
+        elif e.errorCode == EDAMErrorCode.PERMISSION_DENIED:
+             detail = f"Permission denied for attachment {attachment_guid}."
+        raise HTTPException(status_code=400, detail=detail)
+    except EDAMSystemException as e:
+        print(f"Evernote API System Exception (fetch_attachment_data for {attachment_guid}): {e}")
+        detail = f"Evernote system error processing attachment {attachment_guid}: {e.message or 'Internal server error from Evernote.'}"
+        if e.errorCode == EDAMErrorCode.RATE_LIMIT_REACHED:
+            detail = "Evernote API rate limit reached. Please try again later."
+        raise HTTPException(status_code=503, detail=detail)
+    except EDAMNotFoundException as e:
+        print(f"Evernote API Not Found Exception (fetch_attachment_data for {attachment_guid}): {e}")
+        raise HTTPException(status_code=404, detail=f"Attachment with GUID {attachment_guid} not found.")
     except Exception as e:
         print(f"Error fetching attachment data for {attachment_guid}: {e}")
-        # Handle specific Evernote exceptions like EDAMNotFoundException if a resource isn't found
-        raise HTTPException(status_code=500, detail=f"Failed to fetch attachment data: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred while fetching attachment data: {str(e)}") 

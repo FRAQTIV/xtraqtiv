@@ -218,7 +218,11 @@ async function fetchAndDisplayNotebooks() {
     } catch (error) {
         console.error('Error fetching notebooks:', error);
         notebookListLoading.classList.add('hidden');
-        notebookListError.textContent = `Error fetching notebooks: ${error.message}`;
+        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+            displayMessage = "Cannot connect to the application server to fetch notebooks. Please ensure it is running and check your network connection.";
+        }
+        notebookListError.textContent = `Error: ${displayMessage}`;
         notebookListError.classList.remove('hidden');
     }
 }
@@ -289,12 +293,16 @@ async function startExport() {
     } catch (error) {
         console.error('Error fetching notes metadata:', error);
         notesListLoading.classList.add('hidden');
-        notesListError.textContent = `Error fetching notes: ${error.message}`;
+        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+            displayMessage = "Cannot connect to the application server to fetch notes. Please ensure it is running and check your network connection.";
+        }
+        
+        notesListError.textContent = `Error: ${displayMessage}`;
         notesListError.classList.remove('hidden');
         exportBtn.disabled = false;
-        showStatus('Error fetching notes.', 'error');
-        progressInfo.textContent = `Error fetching notes: ${error.message}`;
-        // exportSection.classList.add('hidden'); // Optionally hide on error too
+        showStatus('Error fetching notes.', 'error'); // General status
+        progressInfo.textContent = `Error fetching notes: ${displayMessage}`; // Update progress with the refined message
     }
 }
 
@@ -350,9 +358,13 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     } catch (error) {
         console.error(`Error fetching content for note ${noteGuid}:`, error);
         noteContentLoading.classList.add('hidden');
-        noteContentError.textContent = `Error fetching note content: ${error.message}`;
+        let displayMessage = error.message; // Default to the message from new Error(errorData.detail) or other direct errors
+        if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
+            displayMessage = `Cannot connect to the server to fetch content for note \"${noteTitle}\". Please ensure it is running and check your network connection.`;
+        }
+
+        noteContentError.textContent = `Error: ${displayMessage}`;
         noteContentError.classList.remove('hidden');
-        // Also hide attachment section on error
         noteAttachmentsArea.classList.add('hidden'); 
     }
 }
