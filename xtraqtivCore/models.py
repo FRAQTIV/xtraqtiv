@@ -33,6 +33,7 @@ class NoteMetadata(BaseModel):
 class Note(NoteMetadata):
     content: Optional[str] = None # ENML content
     attachments: List[Attachment] = [] # Changed from placeholder 
+    tags: Optional[List[Tag]] = [] # Add this field to store processed Tag objects
 
 class ConversionRequest(BaseModel):
     enml_content: str

@@ -17,12 +17,21 @@ A modern Python + Electron application that overcomes Evernote's 100-item export
 - Secure communication between frontend and backend
 - System browser integration for OAuth flow
 
-### 🚀 **Data Export** *(Coming Soon)*
-- Unlimited note and notebook export
-- ENML → Markdown conversion
-- Attachment preservation
-- Obsidian-compatible output format
-- Zotero integration support
+### 🚀 **Data Viewing & Conversion** (Phase 2 Core)
+- **Notebook Listing**: View all your Evernote notebooks.
+- **Note Metadata**: Fetch and display titles, dates, and tags for notes in selected notebooks.
+- **Note Content Viewing**: Display ENML content of individual notes.
+- **Attachment Handling**: List attachments for notes and download them.
+- **Format Conversion Viewing**:
+    - View note content converted from ENML to Markdown.
+    - View note content converted from ENML to HTML.
+- **Simulated Full Export**: Trigger a simulated full export process (logs to server, no file output yet).
+
+### 📦 **Full Data Export** *(Partially Implemented, In Progress)*
+- Unlimited note and notebook export *(Backend simulation complete, file output pending)*
+- Attachment preservation during export *(Backend simulation complete, file output pending)*
+- Obsidian-compatible output format *(Planned for Phase 3)*
+- Zotero integration support *(Planned for Phase 4)*
 
 ## 🏗️ Architecture
 
@@ -47,7 +56,7 @@ A modern Python + Electron application that overcomes Evernote's 100-item export
 ### Prerequisites
 - **Python 3.8+** with pip
 - **Node.js 16+** with npm
-- **Evernote account** with API access
+- **Evernote account** with API access (ensure your Evernote API key is configured in `.env` or environment variables)
 
 ### 1. Backend Setup (FastAPI)
 
@@ -78,10 +87,18 @@ npm start
 
 ### 3. Usage
 
-1. **Launch** both FastAPI backend and Electron frontend
-2. **Click "Login to Evernote"** in the app
-3. **Complete OAuth** in your system browser
-4. **Export your data** (Phase 2 - Coming Soon)
+1.  **Launch** both FastAPI backend and Electron frontend.
+2.  **Click "Login to Evernote"** in the app.
+3.  **Complete OAuth** in your system browser.
+4.  Once authenticated:
+    *   The app will list your Evernote notebooks.
+    *   Select desired notebooks.
+    *   Click "Load Notes Metadata" to see notes from selected notebooks.
+    *   Click on a note title to view its ENML content and list of attachments.
+    *   Click "View as Markdown" or "View as HTML" to see the note content in different formats.
+    *   Download attachments by clicking on their names.
+    *   Click "Full Export (Simulated)" to trigger a mock export process (details in server logs).
+5.  **Actual data export to files** is targeted for Phase 3.
 
 ## 📁 Project Structure
 
@@ -89,8 +106,10 @@ npm start
 xtraqtiv/
 ├── 📁 xtraqtivCore/          # Python Backend (FastAPI)
 │   ├── api.py               # FastAPI endpoints
-│   ├── auth.py              # Evernote OAuth authentication
-│   ├── fetch.py             # Data fetching utilities
+│   ├── auth.py              # Evernote OAuth authentication (deprecated, logic merged into api.py)
+│   ├── fetch.py             # Data fetching utilities (partially used, some logic in api.py)
+│   ├── models.py            # Pydantic models for API requests/responses
+│   ├── utils.py             # Utility functions (e.g., ENML conversion)
 │   └── __init__.py
 ├── 📁 xtraqtivApp/           # Frontend Applications
 │   ├── 📁 electron/         # Electron Desktop App
@@ -114,10 +133,16 @@ xtraqtiv/
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/auth/start` | GET | Initiate OAuth flow |
-| `/auth/callback` | GET | Handle OAuth callback |
-| `/auth/status` | GET | Check authentication status |
-| `/auth/logout` | POST | Clear stored credentials |
+| `/auth/start` | POST | Initiate OAuth flow (returns auth URL and request tokens) |
+| `/auth/callback` | GET | Handle OAuth callback, exchange for access token |
+| `/auth/status` | GET | Check if user is currently authenticated |
+| `/auth/logout` | POST | Clear stored credentials and log out |
+| `/notebooks` | GET | List all user notebooks |
+| `/notes/fetch-metadata` | POST | Fetch metadata for notes in specified notebooks (body: `["guid1", "guid2"]`) |
+| `/notes/{note_guid}/content` | GET | Fetch full content (ENML, attachments metadata) for a specific note |
+| `/attachments/{attachment_guid}/data` | GET | Download binary data for a specific attachment |
+| `/notes/convert` | POST | Convert ENML content to Markdown or HTML (body: `{"enml_content": "...", "target_format": "markdown|html"}`) |
+| `/export/notebooks` | POST | **Simulate** full export of selected notebooks (body: `{"notebook_guids": [], "target_format": "markdown|html"}`) |
 
 ### Environment Variables
 
@@ -131,10 +156,24 @@ SANDBOX=false  # Use production environment
 ## 🗺️ Roadmap
 
 - ✅ **Phase 1**: Authentication & Architecture *(Complete)*
-- 🚧 **Phase 2**: Note Fetching & Export *(In Progress)*
-- 📋 **Phase 3**: ENML → Markdown Conversion
-- 🔗 **Phase 4**: Obsidian/Zotero Integration
-- 🎨 **Phase 5**: Advanced UI & Batch Processing
+- ✅ **Phase 2**: Core Data Viewing & Conversion *(Largely Complete)*
+    - Notebook listing & selection.
+    - Note metadata and content (ENML) viewing.
+    - Attachment listing and download.
+    - ENML to Markdown/HTML conversion (viewing).
+    - Simulated full export process.
+- 🚧 **Phase 3**: Full Export Implementation & ENML Processing
+    - Actual file-based export (Markdown, HTML).
+    - Robust ENML parsing and cleaning.
+    - Attachment file saving and linking.
+    - User-configurable export options (path, formats).
+- 🔗 **Phase 4**: Advanced Features & Integrations
+    - Obsidian integration (vault compatibility, metadata).
+    - Zotero integration (research notes).
+- 🎨 **Phase 5**: UI/UX Enhancements & Batch Processing
+    - Advanced UI for export management.
+    - Batch selection tools, filters.
+    - Export history.
 
 ## 🤝 Contributing
 

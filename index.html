@@ -1,1 +1,41 @@
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:8000; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';"> 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Evernote Extractor</title>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' http://localhost:8000; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline';">
+    <link rel="stylesheet" href="xtraqtivApp/electron/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Evernote Extractor</h1>
+
+        <div id="authSection">
+            <p id="authStatus">Checking authentication status...</p>
+            <button id="loginButton" style="display: none;">Login to Evernote</button>
+            <button id="logoutButton" style="display: none;">Logout</button>
+        </div>
+
+        <div id="notebookSelectionArea" class="area-section" style="display: none;">
+            <h3>Select Notebooks for Export: <button id="refreshNotebooksButton" class="inline-button">Refresh List</button></h3>
+            <div id="notebookList" class="notebook-list"></div>
+            <p class="small-text">You can select multiple notebooks.</p>
+        </div>
+        
+        <button id="loadNotesButton" style="display: none;">Load Notes Metadata</button>
+        <button id="startExportButton" style="display: none;">Start Full Export</button>
+
+        <div id="progressInfo" class="progress-info"></div>
+
+        <div id="fetchedNotesArea" class="area-section" style="display: none;">
+            <h3>Fetched Notes:</h3>
+            <p id="notesListStatus">Select notebooks and click 'Load Notes Metadata' to see the list of notes that will be exported.</p>
+            <ul id="fetchedNotesList"></ul>
+        </div>
+
+
+    </div>
+
+    <script src="renderer.js"></script>
+</body>
+</html> 

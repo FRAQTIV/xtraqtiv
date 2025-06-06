@@ -41,6 +41,7 @@ const selectedNoteMarkdownTitle = document.getElementById('selectedNoteMarkdownT
 const noteMarkdownLoading = document.getElementById('noteMarkdownLoading');
 const noteMarkdownError = document.getElementById('noteMarkdownError');
 const noteMarkdownDisplay = document.getElementById('noteMarkdownDisplay');
+const viewAsMarkdownBtn = document.getElementById('viewAsMarkdownBtn');
 
 // New DOM elements for HTML display
 const noteHtmlArea = document.getElementById('noteHtmlArea');
@@ -48,8 +49,6 @@ const selectedNoteHtmlTitle = document.getElementById('selectedNoteHtmlTitle');
 const noteHtmlLoading = document.getElementById('noteHtmlLoading');
 const noteHtmlError = document.getElementById('noteHtmlError');
 const noteHtmlDisplay = document.getElementById('noteHtmlDisplay');
-
-// New DOM elements for HTML button
 const viewAsHtmlBtn = document.getElementById('viewAsHtmlBtn');
 
 // State
@@ -58,6 +57,9 @@ let statusCheckInterval = null;
 let cachedNotebooks = null;
 let cachedNotesMetadata = null;
 let currentNoteData = null;
+let pendingOAuthDetails = null; // To store { token, secret } from /auth/start
+let exchangeTokenAttempts = 0;
+const MAX_EXCHANGE_ATTEMPTS = 15; // Approx 30 seconds if poll interval is 2s
 
 // Utility functions
 function showStatus(message, type = 'info') {
@@ -93,18 +95,29 @@ function updateUI() {
 }
 
 // API functions
-async function checkAuthStatus() {
+async function checkAuthStatus(calledFromPolling = false) {
     try {
         const response = await fetch(`${API_BASE}/auth/status`);
         const data = await response.json();
+        const previouslyAuthenticated = isAuthenticated;
         isAuthenticated = data.authenticated;
-        updateUI();
-        
-        if (isAuthenticated) {
+
+        if (isAuthenticated && !previouslyAuthenticated) {
             showStatus('Connected to Evernote', 'success');
-        } else {
+            pendingOAuthDetails = null; 
+            exchangeTokenAttempts = 0;
+            if (statusCheckInterval) stopStatusPolling(); // Stop if auth succeeded
+            loginBtn.disabled = false;
+        } else if (!isAuthenticated && previouslyAuthenticated) {
+            // Was authenticated, but now is not (e.g. token expired, logout from elsewhere)
+            hideStatus();
+        } else if (!isAuthenticated && !pendingOAuthDetails && !calledFromPolling) {
+            // Not authenticated, no pending login, and not in a polling loop that will retry exchange
             hideStatus();
         }
+        // Always update UI based on the latest isAuthenticated state
+        updateUI(); 
+
     } catch (error) {
         console.error('Error checking auth status:', error);
         showStatus('Error connecting to backend. Make sure the Python server is running.', 'error');
@@ -117,30 +130,147 @@ async function startLogin() {
     try {
         showStatus('Starting authentication...', 'info');
         loginBtn.disabled = true;
+        pendingOAuthDetails = null; 
+        exchangeTokenAttempts = 0;
         
         const response = await fetch(`${API_BASE}/auth/start`, { method: 'POST' });
-        const data = await response.json();
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({ detail: 'Failed to initiate authentication.'}));
+            throw new Error(errorData.detail || `Error ${response.status}`);
+        }
+        const serverData = await response.json(); 
+        console.log('[DEBUG] /auth/start response data:', serverData);
         
-        if (data.auth_url) {
-            showStatus('Opening browser for authentication...', 'info');
+        if (serverData.auth_url && serverData.oauth_token && serverData.oauth_token_secret) {
+            pendingOAuthDetails = { token: serverData.oauth_token, secret: serverData.oauth_token_secret };
+            showStatus('Opening browser for Evernote authorization...', 'info');
             
-            // Open the auth URL in the system browser
+            const originalAuthUrl = serverData.auth_url; 
+            console.log('[DEBUG] URL to open (original from Evernote):', originalAuthUrl);
+
             if (window.electronAPI && window.electronAPI.openExternal) {
-                await window.electronAPI.openExternal(data.auth_url);
+                await window.electronAPI.openExternal(originalAuthUrl);
             } else {
-                // Fallback for development
-                window.open(data.auth_url, '_blank');
+                console.warn('[DEBUG] electronAPI.openExternal not found, using window.open as fallback.');
+                window.open(originalAuthUrl, '_blank'); 
             }
             
-            // Start polling for authentication completion
             startStatusPolling();
         } else {
-            throw new Error('No auth URL received');
+            console.error('[DEBUG] /auth/start response missing required data:', serverData);
+            throw new Error('No auth URL or necessary tokens received from /auth/start');
         }
     } catch (error) {
-        console.error('Login error:', error);
-        showStatus('Login failed. Please try again.', 'error');
+        console.error('[DEBUG] Login error in startLogin catch block:', error.message);
+        showStatus(`Login failed: ${error.message}. Please try again.`, 'error');
         loginBtn.disabled = false;
+        pendingOAuthDetails = null; 
+    }
+}
+
+async function attemptTokenExchange() {
+    if (!pendingOAuthDetails) {
+        console.warn('[DEBUG] attemptTokenExchange called without pendingOAuthDetails.');
+        return false; 
+    }
+
+    exchangeTokenAttempts++;
+    console.log(`[DEBUG] Attempting token exchange (${exchangeTokenAttempts}/${MAX_EXCHANGE_ATTEMPTS})...`);
+    showStatus(`Attempting to finalize Evernote connection (attempt ${exchangeTokenAttempts}/${MAX_EXCHANGE_ATTEMPTS})...`, 'info');
+
+    try {
+        const response = await fetch(`${API_BASE}/auth/exchange-token`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                oauth_token: pendingOAuthDetails.token,
+                oauth_token_secret: pendingOAuthDetails.secret,
+            }),
+        });
+
+        if (response.ok) {
+            const exchangeData = await response.json();
+            if (exchangeData.status === 'authenticated') {
+                console.log('[DEBUG] Token exchange successful!');
+                // `isAuthenticated` will be set true by the subsequent checkAuthStatus call
+                // `pendingOAuthDetails` will be cleared by `checkAuthStatus` when it finds `isAuthenticated` is true
+                // `exchangeTokenAttempts` will be reset by `checkAuthStatus` for the same reason
+                await checkAuthStatus(); // This should confirm isAuthenticated and update UI
+                // stopStatusPolling() will be called by checkAuthStatus if isAuthenticated is true
+                return true; 
+            }
+        } else {
+            const errorData = await response.json().catch(() => ({ detail: 'Token exchange attempt failed with status: ' + response.status }));
+            console.warn('[DEBUG] Token exchange attempt failed (HTTP error):', errorData.detail);
+            if (response.status === 404) { 
+                showStatus(`Waiting for Evernote authorization in browser... (attempt ${exchangeTokenAttempts}/${MAX_EXCHANGE_ATTEMPTS})`, 'info');
+            } else {
+                 showStatus(`Failed to finalize connection (attempt ${exchangeTokenAttempts}/${MAX_EXCHANGE_ATTEMPTS}): ${errorData.detail}. Will retry.`, 'error');
+            }
+        }
+    } catch (error) {
+        console.error('[DEBUG] Network error during token exchange attempt:', error);
+        showStatus(`Network error during connection finalization (attempt ${exchangeTokenAttempts}/${MAX_EXCHANGE_ATTEMPTS}). Will retry.`, 'error');
+    }
+    return false; 
+}
+
+function startStatusPolling() {
+    if (statusCheckInterval) {
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
+    }
+    console.log('[DEBUG] Starting status polling / token exchange attempts.');
+    
+    if (pendingOAuthDetails) {
+        // Initial message when login process starts
+        showStatus('Waiting for Evernote authorization in browser... Once authorized, return to this app.', 'info');
+    }
+    // For subsequent calls or startup check, status will be handled by checkAuthStatus or attemptTokenExchange
+
+    statusCheckInterval = setInterval(async () => {
+        if (isAuthenticated) { 
+            // This should have been caught by checkAuthStatus which would stop the poll
+            // But as a safeguard:
+            console.log('[DEBUG] Polling: Already authenticated. Stopping poll explicitly.');
+            stopStatusPolling();
+            loginBtn.disabled = false; 
+            return;
+        }
+
+        if (pendingOAuthDetails) {
+            if (exchangeTokenAttempts < MAX_EXCHANGE_ATTEMPTS) {
+                const exchangeSuccess = await attemptTokenExchange();
+                if (exchangeSuccess) {
+                    // attemptTokenExchange calls checkAuthStatus, which will stop polling if auth is confirmed
+                    return; 
+                }
+            } else {
+                console.error('[DEBUG] Max token exchange attempts reached. Clearing pending auth.');
+                showStatus('Failed to finalize Evernote connection after multiple attempts. Please try logging in again.', 'error');
+                pendingOAuthDetails = null;
+                exchangeTokenAttempts = 0;
+                stopStatusPolling();
+                loginBtn.disabled = false;
+                await checkAuthStatus(); // Final UI update
+                return;
+            }
+        } else {
+            // No pending OAuth operation, just check status (e.g., for an existing session on startup)
+            console.log('[DEBUG] Polling: No pending OAuth, just checking status regularly.');
+            await checkAuthStatus(true);
+            // If checkAuthStatus finds isAuthenticated is true, it will stop the polling itself.
+        }
+    }, 2000); 
+}
+
+function stopStatusPolling() {
+    if (statusCheckInterval) {
+        console.log('[DEBUG] Stopping status polling.');
+        clearInterval(statusCheckInterval);
+        statusCheckInterval = null;
     }
 }
 
@@ -148,44 +278,21 @@ async function logout() {
     try {
         showStatus('Logging out...', 'info');
         logoutBtn.disabled = true;
+        stopStatusPolling(); 
+        pendingOAuthDetails = null; 
+        exchangeTokenAttempts = 0;
         
-        const response = await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
-        
-        if (response.ok) {
-            isAuthenticated = false;
-            updateUI();
-            hideStatus();
-            stopStatusPolling();
-        } else {
-            throw new Error('Logout failed');
-        }
+        await fetch(`${API_BASE}/auth/logout`, { method: 'POST' });
+        // No need to check response.ok, outcome will be reflected by /auth/status
     } catch (error) {
-        console.error('Logout error:', error);
-        showStatus('Logout failed. Please try again.', 'error');
+        console.error('Logout error (ignoring, will rely on auth status):', error);
     } finally {
+        isAuthenticated = false; // Optimistically set local state
+        updateUI(); // Reflect local state immediately
+        hideStatus();
         logoutBtn.disabled = false;
-    }
-}
-
-function startStatusPolling() {
-    if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-    }
-    
-    statusCheckInterval = setInterval(async () => {
-        await checkAuthStatus();
-        
-        if (isAuthenticated) {
-            stopStatusPolling();
-            loginBtn.disabled = false;
-        }
-    }, 2000);
-}
-
-function stopStatusPolling() {
-    if (statusCheckInterval) {
-        clearInterval(statusCheckInterval);
-        statusCheckInterval = null;
+        loginBtn.disabled = false; 
+        await checkAuthStatus(); // Verify with backend and update UI finally
     }
 }
 
@@ -243,8 +350,13 @@ async function fetchAndDisplayNotebooks(forceRefresh = false) {
     try {
         const response = await fetch(`${API_BASE}/notebooks`);
         if (!response.ok) {
-            if (response.status === 401) {
-                throw new Error('Authentication expired or invalid. Please login again.');
+            if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; // Update local auth state
+                updateUI();
+                stopStatusPolling(); // Stop any polling
+                pendingOAuthDetails = null; // Clear any pending auth attempt
+                return; // Stop further processing
             }
             const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve notebooks.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
@@ -266,7 +378,7 @@ async function fetchAndDisplayNotebooks(forceRefresh = false) {
     }
 }
 
-async function startExport() {
+async function startExport() { // This is "Load Notes Metadata"
     const selectedNotebookGuids = Array.from(document.querySelectorAll('input[name="notebook"]:checked'))
                                 .map(cb => cb.value);
 
@@ -301,6 +413,12 @@ async function startExport() {
         });
 
         if (!response.ok) {
+             if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; updateUI(); stopStatusPolling(); pendingOAuthDetails = null;
+                exportBtn.disabled = false; notesListLoading.classList.add('hidden');
+                return;
+            }
             const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve notes metadata.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
@@ -367,6 +485,12 @@ async function fetchAndDisplayNoteContent(noteGuid, noteTitle) {
     try {
         const response = await fetch(`${API_BASE}/notes/${noteGuid}/content`);
         if (!response.ok) {
+            if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; updateUI(); stopStatusPolling(); pendingOAuthDetails = null;
+                noteContentLoading.classList.add('hidden');
+                return;
+            }
             const errorData = await response.json().catch(() => ({ detail: 'Failed to retrieve note content.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
@@ -444,6 +568,12 @@ async function displayNoteAsMarkdown() {
         });
 
         if (!response.ok) {
+            if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; updateUI(); stopStatusPolling(); pendingOAuthDetails = null;
+                noteMarkdownLoading.classList.add('hidden');
+                return;
+            }
             const errorData = await response.json().catch(() => ({ detail: 'Failed to convert note to Markdown.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
@@ -489,6 +619,12 @@ async function displayNoteAsHtml() {
         });
 
         if (!response.ok) {
+             if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; updateUI(); stopStatusPolling(); pendingOAuthDetails = null;
+                noteHtmlLoading.classList.add('hidden');
+                return;
+            }
             const errorData = await response.json().catch(() => ({ detail: 'Failed to convert note to HTML.' }));
             throw new Error(errorData.detail || `Error ${response.status}`);
         }
@@ -509,7 +645,6 @@ async function displayNoteAsHtml() {
     }
 }
 
-// New function to handle simulated full export
 async function startFullExportSimulated() {
     const selectedNotebookGuids = Array.from(document.querySelectorAll('input[name="notebook"]:checked'))
                                 .map(cb => cb.value);
@@ -519,17 +654,17 @@ async function startFullExportSimulated() {
         return;
     }
 
-    const targetFormat = 'markdown'; // For now, hardcode to markdown for the simulation
+    const targetFormat = 'markdown'; 
 
-    showStatus(`Starting full export simulation for ${selectedNotebookGuids.length} notebook(s) to ${targetFormat}...`, 'info');
-    if(progressInfo) progressInfo.textContent = "Initiating simulated export process... This may take a while. Check server logs for detailed progress.";
-    if(exportSection) exportSection.classList.remove('hidden'); // Show progress section
+    showStatus(`Starting full export for ${selectedNotebookGuids.length} notebook(s) to ${targetFormat}...`, 'info');
+    if(progressInfo) progressInfo.textContent = "Initiating export process... This may take a while. Check server logs for detailed progress.";
+    if(exportSection) exportSection.classList.remove('hidden'); 
     
     fullExportBtn.disabled = true;
-    exportBtn.disabled = true; // Disable other actions too
+    exportBtn.disabled = true; 
 
     try {
-        const response = await fetch(`${API_BASE}/export/notebooks`, {
+        const response = await fetch(`${API_BASE}/export/notebooks`, { // Endpoint was renamed to perform_actual_export; assuming /export/notebooks is current
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -543,20 +678,26 @@ async function startFullExportSimulated() {
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.detail || `Simulated export failed with status ${response.status}`);
+            if (response.status === 401) { // Unauthorized
+                showStatus('Authentication required. Please login again.', 'error');
+                isAuthenticated = false; updateUI(); stopStatusPolling(); pendingOAuthDetails = null;
+                fullExportBtn.disabled = false; exportBtn.disabled = false;
+                return;
+            }
+            throw new Error(result.detail || `Export failed with status ${response.status}`);
         }
 
-        showStatus(result.message || 'Simulated export process finished.', 'success');
-        if(progressInfo) progressInfo.textContent = result.message || "Simulated export finished. Check server logs.";
+        showStatus(result.message || 'Export process finished.', 'success');
+        if(progressInfo) progressInfo.textContent = result.message || "Export finished. Check server logs for output location.";
 
     } catch (error) {
-        console.error('Full export simulation error:', error);
+        console.error('Full export error:', error);
         let displayMessage = error.message;
         if (error.name === 'TypeError' && error.message.toLowerCase().includes('failed to fetch')) {
             displayMessage = "Cannot connect to the application server to start export. Please ensure it is running.";
         }
-        showStatus(`Simulated export failed: ${displayMessage}`, 'error');
-        if(progressInfo) progressInfo.textContent = `Simulated export error: ${displayMessage}`;
+        showStatus(`Export failed: ${displayMessage}`, 'error');
+        if(progressInfo) progressInfo.textContent = `Export error: ${displayMessage}`;
     } finally {
         fullExportBtn.disabled = false;
         exportBtn.disabled = false;
@@ -566,13 +707,13 @@ async function startFullExportSimulated() {
 // Event listeners
 loginBtn.addEventListener('click', startLogin);
 logoutBtn.addEventListener('click', logout);
-exportBtn.addEventListener('click', startExport);
-fullExportBtn.addEventListener('click', startFullExportSimulated);
+exportBtn.addEventListener('click', startExport); // "Load Notes Metadata"
+fullExportBtn.addEventListener('click', startFullExportSimulated); // "Full Export (Simulated)" -> now "Full Export"
 refreshNotebooksBtn.addEventListener('click', () => fetchAndDisplayNotebooks(true));
 viewAsMarkdownBtn.addEventListener('click', displayNoteAsMarkdown);
 viewAsHtmlBtn.addEventListener('click', displayNoteAsHtml);
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    checkAuthStatus();
-}); 
+    checkAuthStatus(); // Check auth on load
+});

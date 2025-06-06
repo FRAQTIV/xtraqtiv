@@ -13,7 +13,10 @@ def mask(s, show=4):
 # You need to register your app at https://dev.evernote.com/doc/ to get these
 CONSUMER_KEY = os.environ.get('EVERNOTE_CONSUMER_KEY', 'YOUR_CONSUMER_KEY')
 CONSUMER_SECRET = os.environ.get('EVERNOTE_CONSUMER_SECRET', 'YOUR_CONSUMER_SECRET')
-SANDBOX = True  # Set to False for production
+# Read SANDBOX setting from environment variable, default to True for safety
+SANDBOX = os.environ.get('SANDBOX', 'true').lower() != 'false'
+# Read callback URL from environment or use default
+CALLBACK_URL = os.environ.get('EVERNOTE_CALLBACK_URL', 'http://localhost:5000')
 
 TOKEN_FILE = os.path.expanduser('~/.evernote_token')
 
@@ -32,7 +35,7 @@ def authenticate():
         consumer_secret=CONSUMER_SECRET,
         sandbox=SANDBOX
     )
-    request_token = client.get_request_token('http://localhost:5000')
+    request_token = client.get_request_token(CALLBACK_URL)
     auth_url = client.get_authorize_url(request_token)
     print(f"Go to the following URL in your browser to authorize:\n{auth_url}")
     print("After authorization, paste the provided verification code here.")

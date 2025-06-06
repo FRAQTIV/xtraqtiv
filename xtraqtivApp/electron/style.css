@@ -1,47 +1,329 @@
-/* Basic styles for xtraqtiv */
+/* Modern Minimal Design for Evernote Extractor */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
 body {
-    font-family: sans-serif;
-    margin: 20px;
-    background-color: #f4f4f4;
-    color: #333;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, system-ui, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    color: #2d3748;
+    line-height: 1.6;
 }
 
 .container {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    max-width: 900px;
+    margin: 0 auto;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* Notebook List Styling */
-#notebooksList li {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Status and Progress Sections */
+#authSection {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+#authStatus {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.status-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+}
+
+.status-info {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+.status-error {
+    background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+    color: white;
+}
+
+/* Card Sections */
+.area-section {
+    background: white;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.area-section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
+}
+
+.area-section h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: #2d3748;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Buttons */
+button {
+    font-family: inherit;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
     cursor: pointer;
-    transition: background-color 0.2s ease-in-out;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    margin: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
-#notebooksList li:hover {
-    background-color: #f0f0f0;
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.15);
 }
 
-#notebooksList li.selected {
-    background-color: #e0e0f0; /* A distinct background for selected item */
-    font-weight: bold;
-    color: #333;
+button:active {
+    transform: translateY(0);
 }
 
-/* Notes List Styling (basic) */
-#notesList li {
+#loginButton {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+#logoutButton {
+    background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+    color: white;
+}
+
+#loadNotesButton {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+}
+
+#startExportButton {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    font-size: 1.1rem;
+    padding: 16px 32px;
+}
+
+.inline-button {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+    font-size: 0.85rem;
+    padding: 8px 16px;
+    margin: 0 0 0 12px;
+}
+
+/* Notebook Selection */
+.notebook-list {
+    max-height: 320px;
+    overflow-y: auto;
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 12px;
+    margin-top: 16px;
+    border: 1px solid #e2e8f0;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.notebook-item {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+}
+
+.notebook-item:last-child {
+    margin-bottom: 0;
+}
+
+.notebook-item:hover {
+    background: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.notebook-item input[type="checkbox"] {
+    margin-right: 12px;
+    transform: scale(1.2);
+    accent-color: #667eea;
+}
+
+.notebook-item label {
+    font-weight: 500;
+    cursor: pointer;
+    color: #2d3748;
+}
+
+.small-text {
+    font-size: 0.9rem;
+    color: #718096;
+    margin-top: 16px;
+    text-align: center;
+}
+
+/* Progress Info */
+.progress-info {
+    background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+    border: 1px solid #81e6d9;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    font-weight: 500;
+    color: #285e61;
+}
+
+.progress-success {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    border-color: #9ae6b4;
+    color: #22543d;
+}
+
+.progress-error {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    border-color: #fc8181;
+    color: #742a2a;
+}
+
+.progress-warning {
+    background: linear-gradient(135deg, #fef5e7 0%, #fbd38d 100%);
+    border-color: #f6ad55;
+    color: #744210;
+}
+
+/* Notes Lists */
+ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+#fetchedNotesList {
+    max-height: 400px;
+    overflow-y: auto;
+    border-radius: 12px;
+    background: #f7fafc;
     padding: 8px;
-    border-bottom: 1px solid #f0f0f0;
 }
 
-/* General class for list styling if needed elsewhere */
-.clickable-list-item {
-    cursor: pointer;
+#fetchedNotesList li {
+    background: white;
+    margin: 6px 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    font-weight: 500;
+    color: #4a5568;
+    transition: all 0.2s ease;
 }
 
-.clickable-list-item:hover {
-    background-color: #f9f9f9;
+#fetchedNotesList li:hover {
+    background: #edf2f7;
+    transform: translateX(4px);
+    border-color: #cbd5e0;
+}
+
+/* Status Messages */
+#notesListStatus {
+    background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+    border: 1px solid #81e6d9;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+    text-align: center;
+    font-weight: 500;
+    color: #285e61;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e0 0%, #a0aec0 100%);
+    border-radius: 8px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #a0aec0 0%, #718096 100%);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        padding: 20px;
+        border-radius: 16px;
+    }
+    
+    h1 {
+        font-size: 2rem;
+    }
+    
+    .area-section {
+        padding: 16px;
+    }
+    
+    button {
+        width: 100%;
+        margin: 4px 0;
+    }
+}
+
+/* Animation for smooth transitions */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.area-section {
+    animation: slideIn 0.3s ease-out;
 } 

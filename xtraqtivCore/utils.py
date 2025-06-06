@@ -1,77 +1,80 @@
-from bs4 import BeautifulSoup
-import markdownify
+from bs4 import BeautifulSoup, NavigableString, Tag
+from markdownify import markdownify as md
+import logging
+import re
 
-def convert_enml_to_markdown(enml_content: str) -> str:
-    """Converts an ENML string to Markdown.
+logger = logging.getLogger(__name__)
 
-    Args:
-        enml_content: The ENML content string (should include <en-note> tags).
-
-    Returns:
-        A string containing the converted Markdown.
-    """
+def convert_enml_to_markdown(enml_content: str | None) -> str:
+    """Converts ENML content to Markdown string."""
+    if enml_content is None:
+        logger.error("Error during ENML to Markdown conversion: ENML content is None.")
+        return ""
     try:
-        # Parse the ENML content as XML
-        # BeautifulSoup can often handle ENML well with its default HTML parser too,
-        # but lxml or xml parser is more strict if needed.
-        soup = BeautifulSoup(enml_content, 'html.parser') # Using html.parser for broader compatibility
-
-        # Find the <en-note> tag, which contains the main content
+        # Use 'xml' parser (lxml) for ENML
+        soup = BeautifulSoup(enml_content, 'xml')
+        # Find the <en-note> tag
         en_note_tag = soup.find('en-note')
-
         if not en_note_tag:
-            # If <en-note> is not found, perhaps the input is already the inner content
-            # or it's not valid ENML. Try to convert the whole thing.
-            # This might be too permissive, consider raising an error or returning as-is.
-            html_content = str(soup)
-        else:
-            html_content = str(en_note_tag) # Get the content of <en-note> as a string
-        
+            logger.warning("No <en-note> tag found in ENML content. Returning empty string.")
+            return ""
+
+        # Extract content within <en-note> for conversion
+        # We need to get the string representation of the children of en-note tag
+        content_html = ''.join(str(child) for child in en_note_tag.children)
+
         # Convert the HTML content to Markdown
-        # Options for markdownify can be specified, e.g., heading_style, strip_tags, etc.
-        # Default options are usually quite good.
-        # Example: markdownify.markdownify(html_content, heading_style=markdownify. csakmarkdown.ATX)
-        markdown_content = markdownify.markdownify(html_content)
-        
-        return markdown_content
-
+        # Added options to handle specific tags if needed, e.g. code blocks
+        markdown_text = md(content_html, heading_style='atx', bullets='* ')
+        return markdown_text
     except Exception as e:
-        print(f"Error during ENML to Markdown conversion: {e}")
-        # Depending on desired behavior, either re-raise, return None, or return original content
-        # For now, return a string indicating failure, or could return the original to see what failed.
-        return f"Error converting ENML to Markdown: {str(e)}"
+        # Log the error and the content that caused it for debugging
+        # logger.error(f"Error during ENML to Markdown conversion: {e}\nENML Content: {enml_content[:500]}...")
+        logger.error(f"Error during ENML to Markdown conversion: {e}")
+        return "" # Return empty string or handle error as appropriate
 
-def convert_enml_to_html(enml_content: str) -> str:
-    """Converts an ENML string to a cleaned HTML string (content of <en-note>).
-
-    Args:
-        enml_content: The ENML content string (should include <en-note> tags).
-
-    Returns:
-        A string containing the HTML content from within <en-note>, or an error message.
-    """
+def convert_enml_to_html(enml_content: str | None) -> str:
+    """Converts ENML content to a simplified HTML string (content of <en-note>)."""
+    if enml_content is None:
+        logger.error("Error during ENML to HTML conversion: ENML content is None.")
+        return ""
     try:
-        soup = BeautifulSoup(enml_content, 'html.parser')
+        # Use 'xml' parser (lxml) for ENML
+        soup = BeautifulSoup(enml_content, 'xml')
         en_note_tag = soup.find('en-note')
 
         if not en_note_tag:
-            # If <en-note> is not found, treat the whole input as HTML content.
-            # This could be useful if pre-extracted content is passed.
-            # Consider if strict <en-note> presence is required.
-            html_output = soup.prettify() # Prettify the whole soup
-        else:
-            # Extract children of en-note and join them, then prettify.
-            # This avoids including the <en-note> tag itself in the output HTML.
-            # Alternatively, en_note_tag.decode_contents() or str(en_note_tag) could be used
-            # depending on whether the <en-note> tag itself should be part of the output.
-            # For exporting the *content*, we usually want what's inside <en-note>.
-            html_output = en_note_tag.decode_contents() # Gets inner HTML of <en-note>
-            # We can re-parse and prettify to ensure it's well-formed if needed, or just return as is.
-            # For now, let's ensure it's somewhat cleaned by parsing then prettifying the decoded content.
-            temp_soup = BeautifulSoup(html_output, 'html.parser')
-            html_output = temp_soup.prettify()
+            logger.warning("No <en-note> tag found in ENML content for HTML conversion. Returning empty string.")
+            return ""
+
+        # We want the *inner* HTML of the en-note tag.
+        # Stripping the <en-note> tag itself.
+        # Preserve en-media, en-crypt, en-todo tags as they are for now
+        # Or define specific handling if needed.
         
-        return html_output
+        # Serialize the children of en_note_tag back to string
+        inner_html = ''.join(str(child) for child in en_note_tag.children)
+        
+        return inner_html.strip()
+
     except Exception as e:
-        print(f"Error during ENML to HTML conversion: {e}")
-        return f"Error converting ENML to HTML: {str(e)}" 
+        # logger.error(f"Error during ENML to HTML conversion: {e}\nENML Content: {enml_content[:500]}...")
+        logger.error(f"Error during ENML to HTML conversion: {e}")
+        return "" # Return empty string or handle error as appropriate 
+
+def sanitize_filename(name: str) -> str:
+    """Sanitizes a string to be a valid filename."""
+    if not isinstance(name, str):
+        name = str(name) # Ensure it's a string
+    # Remove characters that are definitely invalid on most OSes
+    name = re.sub(r'[<>:"/\\|?*\x00-\x1f]', '', name)
+    # Replace sequences of whitespace with a single underscore
+    name = re.sub(r'\s+', '_', name)
+    # Remove leading/trailing underscores or periods that can cause issues
+    name = name.strip('_.')
+    # Ensure the filename is not empty after sanitization
+    if not name:
+        name = "untitled"
+    # Truncate to a reasonable length (e.g., 200 characters)
+    # OS path limits are complex, but individual component length is also a factor.
+    return name[:200] 

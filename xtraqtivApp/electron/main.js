@@ -1,4 +1,4 @@
-const { app, BrowserWindow, shell } = require('electron');
+const { app, BrowserWindow, shell, ipcMain } = require('electron');
 const path = require('path');
 
 let mainWindow;
@@ -17,7 +17,7 @@ function createWindow() {
     title: 'Evernote Extractor'
   });
 
-  mainWindow.loadFile('index.html');
+  mainWindow.loadFile('../../index.html');
 
   // Open DevTools in development
   if (process.env.NODE_ENV === 'development') {
@@ -46,6 +46,19 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
+  }
+});
+
+// Handle IPC calls from the renderer process via preload.js
+ipcMain.handle('open-external', async (event, url) => {
+  console.log('[Main Process] Received request to open external URL:', url);
+  try {
+    await shell.openExternal(url);
+    console.log('[Main Process] Successfully opened URL:', url);
+    return true;
+  } catch (error) {
+    console.error('[Main Process] Error opening URL:', error);
+    throw error; // This will be caught by the preload script
   }
 });
 

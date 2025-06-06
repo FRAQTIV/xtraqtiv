@@ -7,4 +7,6 @@ uvicorn
 keyring
 pydantic
 beautifulsoup4
-markdownify 
+markdownify
+pytest
+lxml 
